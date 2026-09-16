@@ -81,12 +81,21 @@ export default function AlooraPage() {
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
             <FigmaEmbed
               fileKey="IRFsINNlcfcSURNApbJEKT"
               fileName="ALOORA"
               nodeId="173:31"
-              title="ALOORA checkout prototype"
+              title="ALOORA live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Presentation</Kicker>
+            <FigmaEmbed
+              fileKey="IRFsINNlcfcSURNApbJEKT"
+              fileName="ALOORA"
+              nodeId="1904:993"
+              title="ALOORA presentation deck"
             />
           </section>
         </div>

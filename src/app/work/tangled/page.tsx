@@ -75,12 +75,21 @@ export default function TangledPage() {
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
+            <FigmaEmbed
+              fileKey="TpRdmFdcmavII0exeZN0Ao"
+              fileName="Tangled Fan Experience"
+              nodeId="609:808"
+              title="Tangled Fan Experience live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Presentation</Kicker>
             <FigmaEmbed
               fileKey="TpRdmFdcmavII0exeZN0Ao"
               fileName="Tangled Fan Experience"
               nodeId="811:456"
-              title="Tangled Fan Experience presentation prototype"
+              title="Tangled Fan Experience presentation deck"
             />
           </section>
         </div>

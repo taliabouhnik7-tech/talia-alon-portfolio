@@ -108,12 +108,21 @@ export default function YPlatformPage() {
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
+            <FigmaEmbed
+              fileKey="xHbznNo7CmxfWADbqJk9bo"
+              fileName="Y - Math Learning Platform"
+              nodeId="1:2"
+              title="Y live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Presentation</Kicker>
             <FigmaEmbed
               fileKey="xHbznNo7CmxfWADbqJk9bo"
               fileName="Y - Math Learning Platform"
               nodeId="583:2062"
-              title="Y brand book & presentation prototype"
+              title="Y brand book & presentation deck"
             />
           </section>
         </div>

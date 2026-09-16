@@ -4,6 +4,7 @@ import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
+import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
@@ -34,20 +35,42 @@ export default function AudioCodesPage() {
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
               Stakeholder research and an information-architecture redesign
               of the product&apos;s main screen, simplifying navigation and
-              the transcription layout. This project doesn&apos;t have a
-              full research deck attached in Figma yet, so this write-up
-              stays intentionally brief — the design file and live
-              prototype below are the fuller record for now.
+              the transcription layout.
             </p>
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
             <FigmaEmbed
               fileKey="qXhax3bbtDxW0wkC8kmnQN"
               fileName="AudioCodes Meeting Insights"
               nodeId="605:3043"
-              title="AudioCodes Meeting Insights prototype"
+              title="AudioCodes Meeting Insights live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Process &amp; Details</Kicker>
+            <FactGrid
+              facts={[
+                {
+                  label: "Scope",
+                  description:
+                    "A focused redesign of the product's main meeting-insights screen — navigation and the transcription layout.",
+                },
+                {
+                  label: "Approach",
+                  description:
+                    "Stakeholder research informed the information-architecture decisions behind the redesign.",
+                },
+                {
+                  label: "Role",
+                  description: "Solo, end-to-end: research through UI.",
+                },
+                {
+                  label: "Platform",
+                  description: "Enterprise desktop SaaS, English UI.",
+                },
+              ]}
             />
           </section>
         </div>

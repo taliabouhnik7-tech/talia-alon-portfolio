@@ -4,6 +4,7 @@ import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
+import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
@@ -34,20 +35,43 @@ export default function HeichalEtzionPage() {
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
               A donation site for a synagogue&apos;s renovation campaign —
               built for a real community, with a simple flow to give via
-              Paybox or bank transfer. This project doesn&apos;t have a full
-              research deck attached in Figma yet, so this write-up stays
-              intentionally brief — the design file and live prototype below
-              are the fuller record for now.
+              Paybox or bank transfer.
             </p>
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
             <FigmaEmbed
               fileKey="UGGXC78wiz9N0wYEXXsfWP"
               fileName="Heichal Etzion"
               nodeId="1:452"
-              title="Heichal Etzion donation site prototype"
+              title="Heichal Etzion live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Process &amp; Details</Kicker>
+            <FactGrid
+              facts={[
+                {
+                  label: "Client",
+                  description:
+                    "A real synagogue renovation campaign — not a self-directed brief.",
+                },
+                {
+                  label: "Flow",
+                  description:
+                    "A single, focused donation flow: browse the campaign, choose an amount, give via Paybox or bank transfer.",
+                },
+                {
+                  label: "Language",
+                  description: "Hebrew, right-to-left layout throughout.",
+                },
+                {
+                  label: "Role",
+                  description:
+                    "Solo, end-to-end design for a real community stakeholder.",
+                },
+              ]}
             />
           </section>
         </div>

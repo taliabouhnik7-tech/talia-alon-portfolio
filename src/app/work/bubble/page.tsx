@@ -148,12 +148,21 @@ export default function BubblePage() {
           </section>
 
           <section>
-            <Kicker>Live prototype</Kicker>
+            <FigmaEmbed
+              fileKey="jF3JgkJZQszBSHgztRcIAl"
+              fileName="Bubble"
+              nodeId="304:1840"
+              title="Bubble live prototype"
+            />
+          </section>
+
+          <section>
+            <Kicker>Presentation</Kicker>
             <FigmaEmbed
               fileKey="jF3JgkJZQszBSHgztRcIAl"
               fileName="Bubble"
               nodeId="1204:645"
-              title="Bubble presentation prototype"
+              title="Bubble presentation deck"
             />
           </section>
         </div>

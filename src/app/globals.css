@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --color-paper: #faf8f4;
+  --color-ink: #15171b;
+  --color-ink-secondary: #4a4e57;
+  --color-accent: #1e3b32;
+  --color-accent-strong: #16342c;
+  --color-brass: #9c7a38;
+  --color-card: #ffffff;
+  --color-border: rgba(21, 23, 27, 0.12);
+  --color-border-strong: rgba(21, 23, 27, 0.22);
+  --shadow-color: 21 23 27;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #15171b;
+    --color-ink: #f4f2ec;
+    --color-ink-secondary: #b7bac2;
+    --color-accent: #6fae97;
+    --color-accent-strong: #86c2ac;
+    --color-brass: #cba668;
+    --color-card: #1b1e23;
+    --color-border: rgba(244, 242, 236, 0.12);
+    --color-border-strong: rgba(244, 242, 236, 0.22);
+    --shadow-color: 0 0 0;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-ink-secondary: var(--color-ink-secondary);
+  --color-accent: var(--color-accent);
+  --color-accent-strong: var(--color-accent-strong);
+  --color-brass: var(--color-brass);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}

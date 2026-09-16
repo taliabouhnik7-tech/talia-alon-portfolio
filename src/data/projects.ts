@@ -5,6 +5,7 @@ export type Project = {
   category: string;
   description: string;
   image: string;
+  coverType: "mockup" | "browser";
 };
 
 export const projects: Project[] = [
@@ -16,6 +17,7 @@ export const projects: Project[] = [
     description:
       "Stakeholder research and an information-architecture redesign of the product's main screen, simplifying navigation and the transcription layout.",
     image: "/images/work/audiocodes.png",
+    coverType: "browser",
   },
   {
     slug: "y-platform",
@@ -24,7 +26,8 @@ export const projects: Project[] = [
     category: "EdTech · UX/UI + Branding",
     description:
       "End-to-end design for an online math course platform — information architecture, user flows, catalogue, and full brand identity.",
-    image: "/images/work/y-platform.png",
+    image: "/images/work/y-platform-cover.png",
+    coverType: "mockup",
   },
   {
     slug: "chef-coach",
@@ -34,6 +37,7 @@ export const projects: Project[] = [
     description:
       "A culinary training dashboard built around an AI coach — skill tracking, personalized recommendations, and community support for kitchen professionals.",
     image: "/images/work/chef-coach.png",
+    coverType: "browser",
   },
   {
     slug: "heichal-etzion",
@@ -43,6 +47,7 @@ export const projects: Project[] = [
     description:
       "A donation site for a synagogue's renovation campaign — built for a real community, with a simple flow to give via Paybox or bank transfer.",
     image: "/images/work/heichal-etzion.png",
+    coverType: "browser",
   },
   {
     slug: "bubble",
@@ -51,7 +56,8 @@ export const projects: Project[] = [
     category: "UX/UI Case Study",
     description:
       "A location-based messaging app for Israelis abroad. Research, personas, wireframes, a component library, and a Figma prototype.",
-    image: "/images/work/bubble.png",
+    image: "/images/work/bubble-cover.png",
+    coverType: "mockup",
   },
   {
     slug: "aloora",
@@ -60,7 +66,8 @@ export const projects: Project[] = [
     category: "Web & Mobile",
     description:
       "A premium shopping experience across web and mobile, built to carry a luxury brand identity through every screen.",
-    image: "/images/work/aloora.png",
+    image: "/images/work/aloora-cover.png",
+    coverType: "mockup",
   },
   {
     slug: "tangled",
@@ -70,5 +77,6 @@ export const projects: Project[] = [
     description:
       "A playful movie-themed microsite tying nostalgia for Tangled to a real cause — ticket proceeds and hair donations supporting cancer patients.",
     image: "/images/work/tangled.png",
+    coverType: "browser",
   },
 ];

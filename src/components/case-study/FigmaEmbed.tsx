@@ -13,11 +13,12 @@ export default function FigmaEmbed({
   nodeId: string;
   title: string;
 }) {
-  const designUrl = `https://www.figma.com/design/${fileKey}/${encodeURIComponent(
+  const dashNodeId = toDashNodeId(nodeId);
+  const protoUrl = `https://www.figma.com/proto/${fileKey}/${encodeURIComponent(
     fileName
-  )}?node-id=${toDashNodeId(nodeId)}`;
+  )}?node-id=${dashNodeId}&starting-point-node-id=${dashNodeId}&scaling=scale-down-width&content-scaling=fixed&embed_host=share`;
   const src = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(
-    designUrl
+    protoUrl
   )}`;
 
   return (

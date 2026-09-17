@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
+import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
@@ -24,9 +24,9 @@ export default function AudioCodesPage() {
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <BrowserChromeFrame
-            src="/images/work/audiocodes.png"
-            alt="AudioCodes Meeting Insights main screen"
+          <MockupCover
+            src="/images/work/audiocodes-cover.png"
+            alt="AudioCodes Meeting Insights shown on a laptop mockup"
             priority
           />
 
@@ -41,9 +41,9 @@ export default function AudioCodesPage() {
 
           <section>
             <FigmaEmbed
-              fileKey="qXhax3bbtDxW0wkC8kmnQN"
+              fileKey="sSPEp6OTLlFkzOQc11lA2k"
               fileName="AudioCodes Meeting Insights"
-              nodeId="605:3043"
+              nodeId="113:6415"
               title="AudioCodes Meeting Insights live prototype"
             />
           </section>

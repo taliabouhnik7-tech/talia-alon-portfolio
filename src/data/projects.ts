@@ -16,8 +16,8 @@ export const projects: Project[] = [
     category: "Enterprise SaaS Redesign",
     description:
       "Stakeholder research and an information-architecture redesign of the product's main screen, simplifying navigation and the transcription layout.",
-    image: "/images/work/audiocodes.png",
-    coverType: "browser",
+    image: "/images/work/audiocodes-cover.png",
+    coverType: "mockup",
   },
   {
     slug: "y-platform",

@@ -151,7 +151,7 @@ export default function BubblePage() {
             <FigmaEmbed
               fileKey="jF3JgkJZQszBSHgztRcIAl"
               fileName="Bubble"
-              nodeId="304:1840"
+              nodeId="419:1128"
               title="Bubble live prototype"
             />
           </section>

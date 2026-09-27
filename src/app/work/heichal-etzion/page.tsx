@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
+import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
@@ -24,10 +24,11 @@ export default function HeichalEtzionPage() {
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <BrowserChromeFrame
-            src="/images/work/heichal-etzion.png"
-            alt="Heichal Etzion donation landing page"
+          <MockupCover
+            src="/images/work/heichal-etzion-cover.webp"
+            alt="A phone in hand showing the Heichal Etzion donation page"
             priority
+            fit="cover"
           />
 
           <section>

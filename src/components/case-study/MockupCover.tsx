@@ -4,10 +4,12 @@ export default function MockupCover({
   src,
   alt,
   priority = false,
+  fit = "contain",
 }: {
   src: string;
   alt: string;
   priority?: boolean;
+  fit?: "contain" | "cover";
 }) {
   return (
     <div className="overflow-hidden rounded-sm border border-border-strong bg-paper">
@@ -18,7 +20,11 @@ export default function MockupCover({
           fill
           priority={priority}
           sizes="(min-width: 1024px) 60vw, 90vw"
-          className="object-contain p-4 sm:p-8"
+          className={
+            fit === "cover"
+              ? "object-cover"
+              : "object-contain p-4 sm:p-8"
+          }
         />
       </div>
     </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
+import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
@@ -24,9 +24,9 @@ export default function ChefCoachPage() {
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <BrowserChromeFrame
-            src="/images/work/chef-coach.png"
-            alt="Chef Coach dashboard"
+          <MockupCover
+            src="/images/work/chef-coach-cover.png"
+            alt="Chef Coach dashboard shown on a laptop mockup"
             priority
           />
 
@@ -43,7 +43,7 @@ export default function ChefCoachPage() {
             <FigmaEmbed
               fileKey="uuDXGI4ppJTTvwjodTGOHx"
               fileName="Chef Coach"
-              nodeId="84:779"
+              nodeId="197:5143"
               title="Chef Coach live prototype"
             />
           </section>

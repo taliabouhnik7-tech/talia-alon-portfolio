@@ -3,7 +3,6 @@ import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import PersonaCard from "@/components/case-study/PersonaCard";
 import ProblemDecision from "@/components/case-study/ProblemDecision";
@@ -70,14 +69,6 @@ export default function AlooraPage() {
               &quot;luxury visuals,&quot; it was removing the exact
               frictions that make someone abandon an expensive purchase.
             </PullQuote>
-          </section>
-
-          <section>
-            <Kicker>Checkout screen</Kicker>
-            <BrowserChromeFrame
-              src="/images/work/aloora.png"
-              alt="ALOORA checkout screen"
-            />
           </section>
 
           <section>

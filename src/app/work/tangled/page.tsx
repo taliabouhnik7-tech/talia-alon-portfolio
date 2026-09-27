@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
+import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
@@ -25,9 +25,9 @@ export default function TangledPage() {
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <BrowserChromeFrame
-            src="/images/work/tangled.png"
-            alt="Tangled microsite screens: a DIY lantern-making card and a hair-donation charity screening card"
+          <MockupCover
+            src="/images/work/tangled-cover.png"
+            alt="Tangled Fan Experience site shown on a laptop mockup"
             priority
           />
 

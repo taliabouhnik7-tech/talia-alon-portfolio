@@ -3,7 +3,6 @@ import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
-import BrowserChromeFrame from "@/components/case-study/BrowserChromeFrame";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import PersonaCard from "@/components/case-study/PersonaCard";
 import ProblemDecision from "@/components/case-study/ProblemDecision";
@@ -97,14 +96,6 @@ export default function YPlatformPage() {
               Every decision traced back to one source — who Neta is, and
               what she needs right now.
             </PullQuote>
-          </section>
-
-          <section>
-            <Kicker>Interface</Kicker>
-            <BrowserChromeFrame
-              src="/images/work/y-platform.png"
-              alt="Y math learning platform course screen"
-            />
           </section>
 
           <section>

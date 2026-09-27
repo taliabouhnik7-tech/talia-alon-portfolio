@@ -4,13 +4,18 @@
   --color-paper: #faf8f4;
   --color-ink: #15171b;
   --color-ink-secondary: #4a4e57;
-  --color-accent: #1e3b32;
-  --color-accent-strong: #16342c;
+  --color-accent: #2b1e5c;
+  --color-accent-strong: #3d2b7a;
   --color-brass: #9c7a38;
   --color-card: #ffffff;
   --color-border: rgba(21, 23, 27, 0.12);
   --color-border-strong: rgba(21, 23, 27, 0.22);
   --shadow-color: 21 23 27;
+
+  /* Fixed brand tokens — deliberately constant across light/dark theme */
+  --color-brand: #241a52;
+  --color-brand-ink: #f7f4ed;
+  --color-brand-glow: #d9b675;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,8 +23,8 @@
     --color-paper: #15171b;
     --color-ink: #f4f2ec;
     --color-ink-secondary: #b7bac2;
-    --color-accent: #6fae97;
-    --color-accent-strong: #86c2ac;
+    --color-accent: #a78bfa;
+    --color-accent-strong: #c4b5fd;
     --color-brass: #cba668;
     --color-card: #1b1e23;
     --color-border: rgba(244, 242, 236, 0.12);
@@ -38,6 +43,9 @@
   --color-card: var(--color-card);
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
+  --color-brand: var(--color-brand);
+  --color-brand-ink: var(--color-brand-ink);
+  --color-brand-glow: var(--color-brand-glow);
 
   --font-serif: var(--font-fraunces);
   --font-sans: var(--font-inter);
@@ -55,4 +63,70 @@ body {
 ::selection {
   background: var(--color-accent);
   color: var(--color-paper);
+}
+
+@keyframes trace-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes node-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes final-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.hero-mark-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: trace-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.hero-mark-node {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: node-pop 0.4s ease-out forwards;
+}
+
+.hero-mark-final {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: final-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-mark-path,
+  .hero-mark-node,
+  .hero-mark-final {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: scale(1);
+  }
 }

@@ -2,22 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
 
 export default function Nav() {
-  const pathname = usePathname();
-  const hasDarkHero = pathname === "/";
-  const [scrolled, setScrolled] = useState(!hasDarkHero);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    if (!hasDarkHero) return;
     const onScroll = () => setScrolled(window.scrollY > 40);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [hasDarkHero]);
+  }, []);
 
   return (
     <motion.header
@@ -26,7 +22,7 @@ export default function Nav() {
         backgroundColor: scrolled
           ? "var(--color-brand)"
           : "var(--color-brand-deep)",
-        borderColor: scrolled ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0)",
+        borderColor: scrolled ? "rgba(185,166,255,0.15)" : "rgba(0,0,0,0)",
         backdropFilter: scrolled ? "blur(8px)" : "blur(0px)",
       }}
       transition={{ duration: 0.3 }}

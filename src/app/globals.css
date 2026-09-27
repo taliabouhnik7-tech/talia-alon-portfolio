@@ -12,10 +12,14 @@
   --color-border-strong: rgba(21, 23, 27, 0.22);
   --shadow-color: 21 23 27;
 
-  /* Fixed brand tokens — deliberately constant across light/dark theme */
-  --color-brand: #241a52;
+  /* Fixed brand tokens — deliberately constant across light/dark theme.
+     Used for the nav bar and hero "statement" moments only. */
+  --color-brand: #180f36;
+  --color-brand-deep: #0a0716;
+  --color-brand-mid: #241557;
+  --color-brand-glow: #b9a6ff;
+  --color-brand-glow-soft: #6d54c9;
   --color-brand-ink: #f7f4ed;
-  --color-brand-glow: #d9b675;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,8 +48,11 @@
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
   --color-brand: var(--color-brand);
-  --color-brand-ink: var(--color-brand-ink);
+  --color-brand-deep: var(--color-brand-deep);
+  --color-brand-mid: var(--color-brand-mid);
   --color-brand-glow: var(--color-brand-glow);
+  --color-brand-glow-soft: var(--color-brand-glow-soft);
+  --color-brand-ink: var(--color-brand-ink);
 
   --font-serif: var(--font-fraunces);
   --font-sans: var(--font-inter);
@@ -65,68 +72,20 @@ body {
   color: var(--color-paper);
 }
 
-@keyframes trace-draw {
-  from {
-    stroke-dashoffset: 100;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes node-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes final-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.hero-mark-path {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: trace-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) forwards;
-}
-
-.hero-mark-node {
-  opacity: 0;
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: node-pop 0.4s ease-out forwards;
-}
-
-.hero-mark-final {
-  opacity: 0;
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: final-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+/* Subtle film-grain texture for the hero — keeps the deep gradient from
+   reading as a flat plastic color block. */
+.bg-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-mark-path,
-  .hero-mark-node,
-  .hero-mark-final {
-    animation: none;
-    stroke-dashoffset: 0;
-    opacity: 1;
-    transform: scale(1);
+  html {
+    scroll-behavior: auto;
   }
 }

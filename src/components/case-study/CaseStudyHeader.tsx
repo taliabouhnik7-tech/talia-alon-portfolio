@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Kicker from "@/components/Kicker";
+import Reveal from "@/components/Reveal";
 
 export default function CaseStudyHeader({
   kicker,
@@ -18,7 +19,7 @@ export default function CaseStudyHeader({
       >
         ← Back to work
       </Link>
-      <div className="mt-6">
+      <Reveal className="mt-6">
         <Kicker>{kicker}</Kicker>
         <h1 className="font-serif text-3xl text-ink sm:text-4xl md:text-5xl">
           {title}
@@ -28,7 +29,7 @@ export default function CaseStudyHeader({
             {tagline}
           </p>
         ) : null}
-      </div>
+      </Reveal>
     </div>
   );
 }

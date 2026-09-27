@@ -1,3 +1,5 @@
+import Reveal from "@/components/Reveal";
+
 export default function PullQuote({
   children,
   tone = "accent",
@@ -7,10 +9,12 @@ export default function PullQuote({
 }) {
   const borderClass = tone === "accent" ? "border-accent" : "border-brass";
   return (
-    <div className={`border-l-2 ${borderClass} pl-6`}>
-      <p className="font-serif text-xl leading-relaxed text-ink sm:text-2xl">
-        {children}
-      </p>
-    </div>
+    <Reveal>
+      <div className={`border-l-2 ${borderClass} pl-6`}>
+        <p className="font-serif text-xl leading-relaxed text-ink sm:text-2xl">
+          {children}
+        </p>
+      </div>
+    </Reveal>
   );
 }

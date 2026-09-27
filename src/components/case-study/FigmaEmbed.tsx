@@ -1,3 +1,5 @@
+import Reveal from "@/components/Reveal";
+
 function toDashNodeId(nodeId: string) {
   return nodeId.replace(":", "-");
 }
@@ -22,16 +24,18 @@ export default function FigmaEmbed({
   )}`;
 
   return (
-    <div className="overflow-hidden rounded-sm border border-border-strong bg-card">
-      <div className="aspect-[16/10] w-full">
-        <iframe
-          src={src}
-          title={title}
-          allowFullScreen
-          loading="lazy"
-          className="h-full w-full"
-        />
+    <Reveal>
+      <div className="overflow-hidden rounded-sm border border-border-strong bg-card">
+        <div className="aspect-[16/10] w-full">
+          <iframe
+            src={src}
+            title={title}
+            allowFullScreen
+            loading="lazy"
+            className="h-full w-full"
+          />
+        </div>
       </div>
-    </div>
+    </Reveal>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import ScrollTraceRail from "@/components/ScrollTraceRail";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper font-sans text-ink">
+        <ScrollTraceRail />
         {children}
       </body>
     </html>

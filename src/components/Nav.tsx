@@ -1,14 +1,38 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
 
 export default function Nav() {
+  const pathname = usePathname();
+  const hasDarkHero = pathname === "/";
+  const [scrolled, setScrolled] = useState(!hasDarkHero);
+
+  useEffect(() => {
+    if (!hasDarkHero) return;
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hasDarkHero]);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-black/10 bg-brand">
+    <motion.header
+      className="sticky top-0 z-50 border-b"
+      animate={{
+        backgroundColor: scrolled
+          ? "var(--color-brand)"
+          : "var(--color-brand-deep)",
+        borderColor: scrolled ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0)",
+        backdropFilter: scrolled ? "blur(8px)" : "blur(0px)",
+      }}
+      transition={{ duration: 0.3 }}
+    >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 text-brand-ink"
-        >
+        <Link href="/" className="flex items-center gap-2.5 text-brand-ink">
           <Logo className="h-6 w-auto text-brand-glow" />
           <span className="font-serif text-lg font-medium tracking-tight sm:text-xl">
             Talia Alon
@@ -32,6 +56,6 @@ export default function Nav() {
           </li>
         </ul>
       </nav>
-    </header>
+    </motion.header>
   );
 }

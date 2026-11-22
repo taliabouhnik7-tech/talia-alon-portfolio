@@ -1,146 +1,64 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
-import Kicker from "@/components/Kicker";
+import { useState } from "react";
 import ProjectCard from "@/components/ProjectCard";
-import Reveal from "@/components/Reveal";
 import { projects } from "@/data/projects";
 
-const heading = (
-  <>
-    <Kicker>Selected Work</Kicker>
-    <h2 className="max-w-2xl font-serif text-3xl text-ink sm:text-4xl">
-      Eight projects, from a live product I run end to end to team case
-      studies in enterprise, edtech, and e-commerce.
-    </h2>
-  </>
-);
+const filters = [
+  { id: "all", label: "All" },
+  { id: "Solo", label: "Solo" },
+  { id: "Team", label: "Team" },
+] as const;
+
+type FilterId = (typeof filters)[number]["id"];
 
 export default function WorkGrid() {
-  const reduce = useReducedMotion();
+  const [filter, setFilter] = useState<FilterId>("all");
+  const list = filter === "all" ? projects : projects.filter((p) => p.role === filter);
+  const [featured, ...rest] = list;
+  const showFeatured = featured?.slug === "bakery";
+  const grid = showFeatured ? rest : list;
 
   return (
-    <section id="work" className="relative">
-      {/* Mobile / tablet / reduced motion: the classic grid */}
-      <div className={`mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24 ${reduce ? "" : "lg:hidden"}`}>
-        <Reveal>
-          <div className="mb-10">{heading}</div>
-        </Reveal>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, i) => (
-            <Reveal key={project.slug} delay={(i % 3) * 0.08}>
-              <ProjectCard project={project} />
-            </Reveal>
+    <section id="work" className="mx-auto w-full max-w-[1200px] scroll-mt-16 px-5 py-20 sm:px-8 sm:py-28">
+      <div className="flex flex-col gap-6 border-b border-rule pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-graphite sm:text-[56px]">
+            Work
+          </h2>
+          <p className="mt-3 text-[17px] text-graphite-soft">
+            {list.length} {list.length === 1 ? "project" : "projects"}. Solo work I led end to end, and team case studies.
+          </p>
+        </div>
+
+        <div role="tablist" aria-label="Filter projects" className="inline-flex self-start rounded-full bg-[#d6d6d2] p-1 sm:self-auto">
+          {filters.map((f) => (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className={`rounded-full px-4 py-1.5 text-[15px] transition-colors ${
+                filter === f.id ? "bg-frame font-medium text-graphite shadow-sm" : "text-graphite-soft hover:text-graphite"
+              }`}
+            >
+              {f.label}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Desktop: vertical scroll drives a horizontal pass through the work */}
-      {!reduce && <HorizontalTrack />}
+      {showFeatured && (
+        <div className="mt-12">
+          <ProjectCard project={featured} featured />
+        </div>
+      )}
+
+      <div className={`grid grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 ${showFeatured ? "mt-20" : "mt-12"}`}>
+        {grid.map((project) => (
+          <ProjectCard key={project.slug} project={project} />
+        ))}
+      </div>
     </section>
-  );
-}
-
-function HorizontalTrack() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [distance, setDistance] = useState(0);
-
-  useEffect(() => {
-    const measure = () => {
-      const track = trackRef.current;
-      if (!track) return;
-      setDistance(Math.max(0, track.scrollWidth - window.innerWidth));
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    const t = setTimeout(measure, 500);
-    return () => {
-      window.removeEventListener("resize", measure);
-      clearTimeout(t);
-    };
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-  const p = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.35 });
-  const x = useTransform(p, [0, 1], [0, -distance]);
-
-  return (
-    <div
-      ref={sectionRef}
-      className="relative hidden lg:block"
-      style={{ height: `calc(100vh + ${distance}px)` }}
-    >
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden pt-16">
-        <div className="mx-auto mb-10 flex w-full max-w-6xl items-end justify-between gap-10 px-8">
-          <div>{heading}</div>
-          <Counter p={p} />
-        </div>
-
-        <motion.div
-          ref={trackRef}
-          className="flex w-max gap-7 pl-[max(2rem,calc((100vw-72rem)/2+2rem))] pr-[10vw]"
-          style={{ x }}
-        >
-          {projects.map((project, i) => (
-            <TiltCard key={project.slug} index={i} p={p}>
-              <ProjectCard project={project} />
-            </TiltCard>
-          ))}
-        </motion.div>
-
-        <div className="mx-auto mt-10 h-px w-full max-w-6xl bg-ink/10 px-8">
-          <motion.div className="h-px origin-left bg-brass" style={{ scaleX: p }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Each card eases in from a slight 3D turn as it travels into view. */
-function TiltCard({
-  index,
-  p,
-  children,
-}: {
-  index: number;
-  p: MotionValue<number>;
-  children: React.ReactNode;
-}) {
-  const n = projects.length;
-  const center = index / (n - 1);
-  const rotateY = useTransform(p, [center - 0.45, center, center + 0.45], [-14, 0, 8]);
-  const opacity = useTransform(p, [center - 0.6, center - 0.25], [0.35, 1]);
-  return (
-    <motion.div
-      className="w-[380px] shrink-0 xl:w-[420px]"
-      style={{ rotateY, opacity, transformPerspective: 1200 }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function Counter({ p }: { p: MotionValue<number> }) {
-  const n = projects.length;
-  const current = useTransform(p, (v) =>
-    String(Math.min(n, Math.round(v * (n - 1)) + 1)).padStart(2, "0")
-  );
-  return (
-    <p className="shrink-0 pb-1 font-serif text-ink">
-      <motion.span className="text-5xl text-brass">{current}</motion.span>
-      <span className="text-xl text-ink-secondary"> / {String(n).padStart(2, "0")}</span>
-    </p>
   );
 }

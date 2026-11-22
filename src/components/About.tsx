@@ -1,73 +1,49 @@
-import Kicker from "@/components/Kicker";
-import Reveal from "@/components/Reveal";
-
 const skills = [
-  "Figma",
-  "UX Research",
-  "Design Systems",
-  "Wireframing & Prototyping",
+  "User research",
+  "Information architecture",
+  "Wireframes and prototypes",
+  "Design systems",
+  "RTL interfaces",
+  "Mobile-first design",
   "Branding",
-  "RTL Design",
-  "Mobile-First",
-  "Illustrator",
-  "Photoshop",
-  "AI-Assisted Development",
+  "Figma, Illustrator, Photoshop",
+  "Building with AI tools",
 ];
 
 export default function About() {
   return (
-    <section id="about" className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-24">
-      <Reveal>
-        <Kicker>About</Kicker>
-        <h2 className="mb-8 font-serif text-3xl text-ink sm:text-4xl">
-          From cognitive science and the classroom, into product design.
-        </h2>
-      </Reveal>
+    <section id="about" className="scroll-mt-16 border-t border-rule">
+      <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-20 sm:px-8 sm:py-28 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+        <h2 className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-graphite sm:text-[56px]">About</h2>
 
-      <Reveal delay={0.1}>
-        <div className="space-y-5 text-base leading-relaxed text-ink-secondary sm:text-lg">
-          <p>
-            I hold a B.Sc. in Cognitive &amp; Brain Sciences from Ben Gurion
-            University, with a minor in mathematics. Before design, I spent
-            years teaching STEM and tutoring math one-on-one — work that
-            shaped how I approach user research and persona building today:
-            slow down, ask the question behind the question, and design for
-            how people actually think, not how a spec assumes they think.
-          </p>
-          <p>
-            That background also shapes where I draw the line. I care about
-            non-manipulative design. I think in terms of a habit loop, not an
-            addiction loop, and I push back on requests that lean the other
-            way.
-          </p>
+        <div className="max-w-[62ch]">
+          <div className="space-y-5 text-lg leading-[1.65] text-graphite">
+            <p>
+              I have a B.Sc. in Cognitive &amp; Brain Sciences from Ben Gurion University, with a
+              minor in math. Before design I taught STEM and tutored math one on one for years.
+            </p>
+            <p className="text-graphite-soft">
+              Teaching is where I learned to research. When a student is stuck, the question they
+              ask is rarely the real problem. I bring the same habit to interviews and usability
+              tests: slow down, find the real question, and design for how people think rather than
+              how a spec assumes they think.
+            </p>
+            <p className="text-graphite-soft">
+              I also have a clear line. I design habit loops that respect people, not addiction
+              loops that use them, and I say so when a brief asks for the second.
+            </p>
+          </div>
+
+          <h3 className="mt-12 text-[15px] text-graphite-soft">What I work on</h3>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {skills.map((s) => (
+              <li key={s} className="rounded-full bg-frame px-3.5 py-1.5 text-[15px] text-graphite ring-1 ring-rule">
+                {s}
+              </li>
+            ))}
+          </ul>
         </div>
-      </Reveal>
-
-      <Reveal delay={0.15}>
-        <div className="mt-10 border-l-2 border-accent pl-6">
-          <p className="font-serif text-lg leading-relaxed text-ink sm:text-xl">
-            A habit loop respects the person using it. An addiction loop
-            exploits them. I design for the first — and I&apos;ll say so when
-            a brief is asking for the second.
-          </p>
-        </div>
-      </Reveal>
-
-      <Reveal delay={0.1}>
-        <h3 className="mt-12 mb-4 text-sm font-semibold uppercase tracking-[0.1em] text-ink">
-          Skills &amp; tools
-        </h3>
-        <ul className="flex flex-wrap gap-2.5">
-          {skills.map((skill) => (
-            <li
-              key={skill}
-              className="rounded-full border border-border-strong px-4 py-1.5 text-sm text-ink-secondary"
-            >
-              {skill}
-            </li>
-          ))}
-        </ul>
-      </Reveal>
+      </div>
     </section>
   );
 }

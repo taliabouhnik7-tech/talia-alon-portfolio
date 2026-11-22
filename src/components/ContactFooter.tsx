@@ -1,56 +1,37 @@
-import Kicker from "@/components/Kicker";
-import Reveal from "@/components/Reveal";
-
 export default function ContactFooter() {
   return (
-    <footer id="contact" className="border-t border-border bg-card/60">
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
-        <Reveal>
-          <Kicker>Contact</Kicker>
-          <h2 className="max-w-xl font-serif text-3xl text-ink sm:text-4xl">
-            Open to UX/UI roles — let&apos;s talk about how I could help your
-            team.
-          </h2>
-        </Reveal>
+    <footer id="contact" className="scroll-mt-16 bg-graphite text-white">
+      <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 sm:py-28">
+        <p className="text-[17px] text-white/60">Hiring for a UX/UI role? I&apos;d like to hear about it.</p>
+        <a
+          href="mailto:taliabouhnik7@gmail.com"
+          className="mt-4 inline-block break-all text-[32px] font-semibold leading-tight tracking-[-0.03em] underline decoration-white/25 decoration-2 underline-offset-[10px] transition-colors hover:decoration-white sm:text-[56px] lg:text-[72px]"
+        >
+          taliabouhnik7@gmail.com
+        </a>
 
-        <Reveal delay={0.1}>
-          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
-            <ul className="space-y-3 text-base text-ink-secondary sm:text-lg">
-              <li>
-                <a
-                  href="mailto:taliabouhnik7@gmail.com"
-                  className="font-medium text-ink transition-colors hover:text-accent"
-                >
-                  taliabouhnik7@gmail.com
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:+972586666623"
-                  className="font-medium text-ink transition-colors hover:text-accent"
-                >
-                  058-666-6623
-                </a>
-              </li>
-              <li>Hadera, Israel</li>
-              <li>
-                <a
-                  href="https://www.behance.net/5dec536b"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-ink transition-colors hover:text-accent"
-                >
-                  Behance ↗
-                </a>
-              </li>
-            </ul>
+        <dl className="mt-16 grid gap-8 border-t border-white/15 pt-6 text-[17px] sm:grid-cols-3">
+          <div>
+            <dt className="text-white/50">Phone</dt>
+            <dd className="mt-1">
+              <a href="tel:+972586666623" className="hover:underline">058-666-6623</a>
+            </dd>
           </div>
-        </Reveal>
+          <div>
+            <dt className="text-white/50">Portfolio on Behance</dt>
+            <dd className="mt-1">
+              <a href="https://www.behance.net/5dec536b" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                behance.net/5dec536b
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-white/50">Based in</dt>
+            <dd className="mt-1">Hadera, Israel</dd>
+          </div>
+        </dl>
 
-        <div className="mt-16 flex flex-col gap-2 border-t border-border pt-6 text-xs text-ink-secondary sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-serif text-base text-ink">Talia Alon</p>
-          <p>© {new Date().getFullYear()} Talia Alon. All rights reserved.</p>
-        </div>
+        <p className="mt-16 text-[15px] text-white/40">© {new Date().getFullYear()} Talia Alon</p>
       </div>
     </footer>
   );

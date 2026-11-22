@@ -1,27 +1,40 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens.
+ * The site borrows its logic from a design file: a neutral grey canvas,
+ * white frames sitting on it, graphite ink, and one cobalt "selection"
+ * colour used only for what is active, focused or chosen.
+ */
 :root {
-  --color-paper: #0c0818;
-  --color-ink: #f4f1ea;
-  --color-ink-secondary: #aea7c4;
-  --color-accent: #b9a6ff;
-  --color-accent-strong: #cfc0ff;
-  --color-brass: #cba668;
-  --color-card: #170f2b;
-  --color-border: rgba(185, 166, 255, 0.14);
-  --color-border-strong: rgba(185, 166, 255, 0.26);
-  --shadow-color: 0 0 0;
+  --color-canvas: #e7e7e4;
+  --color-frame: #ffffff;
+  --color-graphite: #23262b;
+  --color-graphite-soft: #5f646c;
+  --color-rule: #cdcdc9;
+  --color-select: #3552f2;
 
-  /* Fixed brand tokens — the hero's specific gradient treatment. */
-  --color-brand: #180f36;
-  --color-brand-deep: #0a0716;
-  --color-brand-mid: #241557;
-  --color-brand-glow: #b9a6ff;
-  --color-brand-glow-soft: #6d54c9;
-  --color-brand-ink: #f7f4ed;
+  /* Legacy names used across case-study pages, mapped onto the new system. */
+  --color-paper: var(--color-canvas);
+  --color-ink: var(--color-graphite);
+  --color-ink-secondary: var(--color-graphite-soft);
+  --color-accent: var(--color-select);
+  --color-accent-strong: #2a43d1;
+  --color-brass: var(--color-graphite-soft);
+  --color-card: var(--color-frame);
+  --color-border: var(--color-rule);
+  --color-border-strong: #b5b5b0;
+  --shadow-color: 35 38 43;
 }
 
 @theme inline {
+  --color-canvas: var(--color-canvas);
+  --color-frame: var(--color-frame);
+  --color-graphite: var(--color-graphite);
+  --color-graphite-soft: var(--color-graphite-soft);
+  --color-rule: var(--color-rule);
+  --color-select: var(--color-select);
+
   --color-paper: var(--color-paper);
   --color-ink: var(--color-ink);
   --color-ink-secondary: var(--color-ink-secondary);
@@ -31,22 +44,15 @@
   --color-card: var(--color-card);
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
-  --color-brand: var(--color-brand);
-  --color-brand-deep: var(--color-brand-deep);
-  --color-brand-mid: var(--color-brand-mid);
-  --color-brand-glow: var(--color-brand-glow);
-  --color-brand-glow-soft: var(--color-brand-glow-soft);
-  --color-brand-ink: var(--color-brand-ink);
 
-  --font-serif: var(--font-fraunces);
-  --font-sans: var(--font-inter);
+  --font-serif: var(--font-grotesk);
+  --font-sans: var(--font-grotesk);
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Lenis drives scrolling itself; native smooth-scroll would fight it. */
 html.lenis,
 html.lenis body {
   height: auto;
@@ -59,25 +65,20 @@ html.lenis {
 }
 
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--color-canvas);
+  color: var(--color-graphite);
+  font-feature-settings: "ss01", "kern";
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-paper);
+  background: var(--color-select);
+  color: #fff;
 }
 
-/* Subtle film-grain texture — keeps deep gradients from reading as a
-   flat plastic color block. */
-.bg-grain::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+:focus-visible {
+  outline: 2px solid var(--color-select);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

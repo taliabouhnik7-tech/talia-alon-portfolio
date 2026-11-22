@@ -1,35 +1,25 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Schibsted_Grotesk } from "next/font/google";
 import SmoothScroll from "@/components/SmoothScroll";
-import ScrollTraceRail from "@/components/ScrollTraceRail";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const grotesk = Schibsted_Grotesk({
+  variable: "--font-grotesk",
   subsets: ["latin"],
-  style: ["normal", "italic"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Talia Alon — UX/UI Designer",
+  title: "Talia Alon, UX/UI designer",
   description:
-    "UX/UI designer with a background in cognitive science. Portfolio of Talia Alon — research, design, and end-to-end product work.",
+    "Portfolio of Talia Alon, a UX/UI designer with a background in cognitive science. Research, interface design and shipped products.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-paper font-sans text-ink">
+    <html lang="en" className={`${grotesk.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col bg-canvas font-sans text-graphite">
         <SmoothScroll />
-        <ScrollTraceRail />
         {children}
       </body>
     </html>

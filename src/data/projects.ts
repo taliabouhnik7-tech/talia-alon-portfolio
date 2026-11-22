@@ -1,7 +1,7 @@
 export type Project = {
   slug: string;
   title: string;
-  role: string;
+  role: "Solo" | "Team";
   category: string;
   description: string;
   image: string;
@@ -13,73 +13,73 @@ export const projects: Project[] = [
     slug: "bakery",
     title: "Talia Alon Bakery",
     role: "Solo",
-    category: "Personal Business · Live Product",
+    category: "Live product",
     description:
-      "A live, deployed ordering site and admin system for a home bakery — designed end to end in Figma, then directed into production myself.",
+      "Ordering site and admin system for my home bakery. I designed it in Figma, then built and launched it. Real customers order from it every week.",
     image: "/images/work/bakery-cover.webp",
   },
   {
     slug: "audiocodes",
     title: "AudioCodes Meeting Insights",
     role: "Solo",
-    category: "Enterprise SaaS Redesign",
+    category: "Enterprise SaaS",
     description:
-      "Stakeholder research and an information-architecture redesign of the product's main screen, simplifying navigation and the transcription layout.",
+      "Stakeholder research and a new information architecture for the main screen, with simpler navigation and an easier transcript layout.",
     image: "/images/work/audiocodes-cover.png",
   },
   {
     slug: "y-platform",
-    title: "Y — Math Learning Platform",
+    title: "Y, a math learning platform",
     role: "Solo",
-    category: "EdTech · UX/UI + Branding",
+    category: "EdTech, UX/UI and branding",
     description:
-      "End-to-end design for an online math course platform — information architecture, user flows, catalogue, and full brand identity.",
+      "An online math course for grades 7 to 12: information architecture, user flows, the course catalogue and the brand.",
     image: "/images/work/y-platform-cover.png",
   },
   {
     slug: "chef-coach",
     title: "Chef Coach",
     role: "Solo",
-    category: "AI Coaching Platform",
+    category: "AI product",
     description:
-      "A culinary training dashboard built around an AI coach — skill tracking, personalized recommendations, and community support for kitchen professionals.",
+      "A training dashboard for kitchen professionals with an AI coach, skill tracking and personal recommendations.",
     image: "/images/work/chef-coach-cover.png",
   },
   {
     slug: "heichal-etzion",
     title: "Heichal Etzion",
     role: "Solo",
-    category: "Real-client donation landing page",
+    category: "Donation site, real client",
     description:
-      "A donation site for a synagogue's renovation campaign — built for a real community, with a simple flow to give via Paybox or bank transfer.",
+      "A donation page for a synagogue renovation. Two ways to give, Paybox or bank transfer, and nothing in the way.",
     image: "/images/work/heichal-etzion-cover.webp",
     imageFit: "cover",
   },
   {
     slug: "bubble",
-    title: "Bubble — Social Networking App",
+    title: "Bubble",
     role: "Team",
-    category: "UX/UI Case Study",
+    category: "Mobile app",
     description:
-      "A location-based messaging app for Israelis abroad. Research, personas, wireframes, a component library, and a Figma prototype.",
+      "A location-based messaging app for Israelis abroad. Research, personas, wireframes, a component library and a Figma prototype.",
     image: "/images/work/bubble-cover.png",
   },
   {
     slug: "aloora",
-    title: "ALOORA — Luxury Jewelry E-commerce",
+    title: "ALOORA",
     role: "Team",
-    category: "Web & Mobile",
+    category: "Luxury e-commerce",
     description:
-      "A premium shopping experience across web and mobile, built to carry a luxury brand identity through every screen.",
+      "A jewelry store for web and mobile that carries a premium brand through every screen, from browsing to checkout.",
     image: "/images/work/aloora-cover.png",
   },
   {
     slug: "tangled",
-    title: "Tangled Fan Experience",
+    title: "Tangled fan experience",
     role: "Team",
-    category: "Creative Microsite",
+    category: "Campaign microsite",
     description:
-      "A playful movie-themed microsite tying nostalgia for Tangled to a real cause — ticket proceeds and hair donations supporting cancer patients.",
+      "A playful microsite built on nostalgia for Tangled, raising ticket money and hair donations for cancer patients.",
     image: "/images/work/tangled-cover.png",
   },
 ];

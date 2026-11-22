@@ -1,112 +1,61 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useScroll, useTransform, type Variants } from "framer-motion";
-import HeroMark from "@/components/HeroMark";
-
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
-};
-
-const item: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+const facts = [
+  {
+    label: "Background",
+    value: "B.Sc. in Cognitive & Brain Sciences, Ben Gurion University",
   },
-};
+  {
+    label: "Craft",
+    value: "Research, interaction design, design systems, RTL and mobile",
+  },
+  {
+    label: "Shipped",
+    value: "A live ordering site for my own bakery, designed and built by me",
+  },
+];
 
 export default function Hero() {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  // As the hero leaves, the copy drifts up and dissolves — handing off to
-  // the scroll-driven process section below.
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -120]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-  const textBlur = useTransform(scrollYProgress, [0.3, 0.9], ["blur(0px)", "blur(6px)"]);
-
   return (
-    <section
-      ref={ref}
-      id="top"
-      className="bg-grain relative overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(130% 110% at 80% 10%, var(--color-brand-glow-soft) 0%, var(--color-brand-mid) 38%, var(--color-brand-deep) 78%)",
-      }}
-    >
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="relative z-10 mx-auto grid max-w-6xl gap-10 px-5 pt-14 pb-16 sm:px-8 sm:pt-20 sm:pb-20 lg:grid-cols-[1fr_360px] lg:items-center lg:gap-16 lg:pb-28"
-      >
-        <motion.div
-          className="max-w-2xl"
-          style={{ y: textY, opacity: textOpacity, filter: textBlur }}
+    <section id="top" className="mx-auto w-full max-w-[1200px] px-5 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-28">
+      <p className="flex items-center gap-2.5 text-[15px] text-graphite-soft">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inset-0 rounded-full bg-[#2f9e5b]" />
+        </span>
+        UX/UI designer in Hadera, open to new roles
+      </p>
+
+      <h1 className="mt-6 max-w-[15ch] text-[44px] font-semibold leading-[1.02] tracking-[-0.035em] text-graphite sm:text-[68px] lg:text-[88px]">
+        I design products around how people actually think.
+      </h1>
+
+      <p className="mt-8 max-w-[56ch] text-lg leading-[1.6] text-graphite-soft sm:text-xl">
+        I studied cognitive science and spent years teaching math one on one.
+        Now I use both in research and interface design, and when a project
+        needs it, I build the product myself.
+      </p>
+
+      <div className="mt-10 flex flex-wrap gap-3">
+        <a
+          href="#work"
+          className="rounded-full bg-graphite px-6 py-3 text-[15px] font-medium text-white transition-colors hover:bg-black"
         >
-          <motion.div variants={item} className="lg:hidden">
-            <HeroMark className="mb-8 h-32 w-32 text-brand-glow" />
-          </motion.div>
+          See my work
+        </a>
+        <a
+          href="mailto:taliabouhnik7@gmail.com"
+          className="rounded-full border border-graphite/25 px-6 py-3 text-[15px] font-medium text-graphite transition-colors hover:border-graphite"
+        >
+          Email me
+        </a>
+      </div>
 
-          <motion.h1
-            variants={item}
-            className="font-serif text-4xl leading-[1.1] tracking-tight text-brand-ink sm:text-5xl md:text-6xl"
-          >
-            Design decisions you can trace, all the way to production.
-          </motion.h1>
-          <motion.p
-            variants={item}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-brand-ink/75 sm:text-xl"
-          >
-            UX/UI designer with a background in cognitive science. I research,
-            design — and when it matters, I take the thing all the way to a
-            live product myself.
-          </motion.p>
-          <motion.div
-            variants={item}
-            className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <a
-              href="#work"
-              className="inline-flex items-center justify-center rounded-sm bg-brand-glow px-6 py-3 text-sm font-semibold text-brand-deep transition-colors hover:brightness-110"
-            >
-              See selected work
-            </a>
-            <a
-              href="#contact"
-              className="inline-flex items-center justify-center rounded-sm border border-brand-ink/30 px-6 py-3 text-sm font-semibold text-brand-ink transition-colors hover:border-brand-glow hover:text-brand-glow"
-            >
-              Get in touch
-            </a>
-          </motion.div>
-          <motion.p
-            variants={item}
-            className="mt-10 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium uppercase tracking-[0.1em] text-brand-ink/60"
-          >
-            <span>Based in Hadera, Israel</span>
-            <span className="text-brand-glow">·</span>
-            <span>Open to UX/UI roles</span>
-            <span className="text-brand-glow">·</span>
-            <span>Figma</span>
-            <span className="text-brand-glow">·</span>
-            <span>Design Systems</span>
-            <span className="text-brand-glow">·</span>
-            <span>RTL</span>
-            <span className="text-brand-glow">·</span>
-            <span>Mobile-first</span>
-          </motion.p>
-        </motion.div>
-
-        <motion.div variants={item} className="hidden lg:block">
-          <HeroMark className="h-80 w-80 text-brand-glow" />
-        </motion.div>
-      </motion.div>
+      <dl className="mt-20 grid gap-8 border-t border-rule pt-6 sm:grid-cols-3 sm:gap-10">
+        {facts.map((f) => (
+          <div key={f.label}>
+            <dt className="text-[15px] text-graphite-soft">{f.label}</dt>
+            <dd className="mt-1.5 max-w-[30ch] text-[17px] leading-snug text-graphite">{f.value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }

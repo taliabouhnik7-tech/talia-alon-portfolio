@@ -4,23 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { edges, nodes, outline, type Region } from "@/data/brain";
 
 /*
- * Background: one set of particles that keeps changing shape as you scroll.
+ * Background: the CV, told as a path through the brain.
  *
- *   brain  ->  pours onto a chalkboard  ->  bursts into sticky notes
- *          ->  snaps into Figma frames  ->  folds into a shipped app
- *
- * Every frame is a pure function of scroll position, so scrolling back up
- * plays it in reverse. The same particles travel the whole way; each shape's
- * solid artwork only fades in once its particles have arrived.
+ * The timeline is plain, readable content. As each step reaches the middle of
+ * the screen, the brain regions it trained light up with a ripple of signals.
+ * On the last step the neurons walk through a real design process on the
+ * reader's scroll: they settle into a layout grid, the grid becomes a
+ * wireframe, the wireframe becomes an interface, and the interface responds
+ * to a tap. How people think, turned into what they use.
  */
-
-type RGB = [number, number, number];
-type C2D = CanvasRenderingContext2D;
-type Mode = "mask" | "render";
 
 const COBALT: RGB = [53, 82, 242];
 const INK: RGB = [26, 29, 34];
-const CHALK: RGB = [245, 244, 238];
+type RGB = [number, number, number];
 
 type Step = {
   where: string;
@@ -38,7 +34,7 @@ const steps: Step[] = [
     body: "How people perceive, pay attention, remember and decide, and the research methods behind it: ask a clear question, test it, read the data honestly.",
     design: "Fewer choices per screen, a clear visual hierarchy, and decisions backed by evidence rather than taste.",
     regions: ["occipital", "temporal", "frontal"],
-    regionLabel: "How people perceive, remember and decide",
+    regionLabel: "Perception, memory and decision-making",
   },
   {
     where: "STEM instruction and private tutoring",
@@ -46,7 +42,7 @@ const steps: Step[] = [
     body: "Years of sessions with students who were stuck. The question they asked was rarely the real problem.",
     design: "This is how I run interviews and usability tests: listen longer, find the real question, then design.",
     regions: ["temporal", "frontal"],
-    regionLabel: "Explaining one idea five different ways",
+    regionLabel: "Language and planning",
   },
   {
     where: "HackerU",
@@ -54,7 +50,7 @@ const steps: Step[] = [
     body: "The full process on solo and team projects: research, personas, user flows, information architecture, wireframes, UI and prototypes.",
     design: "A process I still follow on every project, so nothing gets designed before it's understood.",
     regions: ["parietal", "occipital"],
-    regionLabel: "Interviews, personas, user flows",
+    regionLabel: "Visual and spatial processing",
   },
   {
     where: "Udemy",
@@ -62,7 +58,7 @@ const steps: Step[] = [
     body: "Components, variants, auto layout, variables and interactive prototypes.",
     design: "Files a developer can build from, and design systems that hold up past the first screen.",
     regions: ["cerebellum", "parietal"],
-    regionLabel: "Frames, components, auto layout",
+    regionLabel: "Skill built through practice",
   },
   {
     where: "Talia Alon Bakery",
@@ -70,7 +66,7 @@ const steps: Step[] = [
     body: "An ordering site and admin system for my home bakery. It's live, and real customers order from it.",
     design: "I know what happens after handoff, because I've been on both sides of it.",
     regions: ["frontal", "parietal", "temporal", "occipital", "cerebellum", "stem"],
-    regionLabel: "Designed, built and shipped",
+    regionLabel: "All of it, working together",
   },
   {
     where: "Now",
@@ -83,30 +79,24 @@ const steps: Step[] = [
 ];
 
 const REGIONS: Region[] = ["frontal", "parietal", "temporal", "occipital", "cerebellum", "stem"];
-// While the first step scrolls in, regions light up one after another.
-const LIGHT_AT: Record<Region, number> = { occipital: 0, temporal: 0.2, frontal: 0.4, parietal: 0.6, cerebellum: 0.75, stem: 0.85 };
+const REGION_NAMES: Partial<Record<Region, string>> = {
+  frontal: "Decisions",
+  parietal: "Attention",
+  temporal: "Language, memory",
+  occipital: "Vision",
+  cerebellum: "Skill",
+};
+
+const STAGES = [
+  { name: "Grid", text: "Neurons settle into a layout grid" },
+  { name: "Wireframe", text: "The grid becomes a wireframe" },
+  { name: "Interface", text: "The wireframe becomes an interface" },
+  { name: "Interaction", text: "And the interface responds" },
+];
+
+/* ---------- geometry, computed once ---------------------------------- */
+
 const N = nodes.length;
-const BCX = 300, BCY = 215;
-
-/* ---------- small math ------------------------------------------------ */
-const clamp = (v: number) => Math.max(0, Math.min(1, v));
-const smooth = (x: number) => x * x * (3 - 2 * x);
-const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-const backOut = (t: number) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
-const seg = (v: number, a: number, b: number) => clamp((v - a) / (b - a));
-const rgba = (c: RGB, a: number) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
-const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-const rand = (i: number, k: number) => {
-  const v = Math.sin(i * k) * 43758.5453;
-  return v - Math.floor(v);
-};
-const bez = (p0: number, p1: number, p2: number, p3: number, t: number) => {
-  const u = 1 - t;
-  return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3;
-};
-
-/* ---------- brain geometry ------------------------------------------- */
 const centroids = REGIONS.reduce(
   (acc, r) => {
     const pts = nodes.filter((n) => n.r === r);
@@ -115,453 +105,103 @@ const centroids = REGIONS.reduce(
   },
   {} as Record<Region, [number, number]>
 );
-const nodeDist = nodes.map((n) => Math.hypot(n.x - centroids[n.r][0], n.y - centroids[n.r][1]));
+const labelPos: Record<Region, [number, number]> = {
+  ...centroids,
+  frontal: [centroids.frontal[0] - 10, centroids.frontal[1] - 20],
+  parietal: [centroids.parietal[0] + 10, centroids.parietal[1] - 25],
+  temporal: [centroids.temporal[0], centroids.temporal[1] + 10],
+};
+
+// Phone, in the same 610 x 440 drawing space as the brain.
+const PX = 210, PY = 20, PW = 190, PH = 400, PR = 30;
+type R5 = [number, number, number, number, number];
+const UI = {
+  header: [PX + 16, PY + 46, 92, 12, 4] as R5,
+  card: [PX + 14, PY + 72, PW - 28, 98, 16] as R5,
+  rows: [0, 1, 2].map((i) => [PX + 14, PY + 196 + i * 46, PW - 28, 38, 12] as R5),
+  button: [PX + 22, PY + PH - 60, PW - 44, 36, 18] as R5,
+};
+const wireRects: R5[] = [[PX, PY, PW, PH, PR], UI.header, UI.card, ...UI.rows, UI.button];
+
+// Stage 1 targets: a 7-column layout grid, filled row by row.
+const COLS = 7;
+const byY = nodes.map((_, i) => i).sort((a, b) => nodes[a].y - nodes[b].y);
+const gridPos: [number, number][] = new Array(N);
+const order: number[] = new Array(N); // 0..1, top-to-bottom, drives the stagger
+const rowsCount = Math.ceil(N / COLS);
+for (let r = 0; r < rowsCount; r++) {
+  const chunk = byY.slice(r * COLS, r * COLS + COLS).sort((a, b) => nodes[a].x - nodes[b].x);
+  const offset = (COLS - chunk.length) / 2;
+  chunk.forEach((idx, c) => {
+    gridPos[idx] = [PX + 18 + ((c + offset) * (PW - 36)) / (COLS - 1), PY + 22 + (r * (PH - 44)) / (rowsCount - 1)];
+    order[idx] = (r * COLS + c) / N;
+  });
+}
+
+// Stage 2 targets: points spaced along every wireframe outline.
+function perimeterPoints(count: number) {
+  const segs: [number, number, number, number][] = [];
+  for (const [x, y, w, h] of wireRects) {
+    segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]);
+  }
+  const lens = segs.map(([a, b, c, d]) => Math.hypot(c - a, d - b));
+  const total = lens.reduce((a, b) => a + b, 0);
+  const out: [number, number][] = [];
+  for (let k = 0; k < count; k++) {
+    let t = ((k + 0.5) / count) * total;
+    for (let i = 0; i < segs.length; i++) {
+      if (t <= lens[i]) {
+        const f = t / lens[i];
+        const [a, b, c, d] = segs[i];
+        out.push([a + (c - a) * f, b + (d - b) * f]);
+        break;
+      }
+      t -= lens[i];
+    }
+  }
+  return out;
+}
+const wirePts = perimeterPoints(N);
+const angle = ([x, y]: [number, number]) => Math.atan2(y - (PY + PH / 2), x - (PX + PW / 2));
+const wirePos: [number, number][] = new Array(N);
+{
+  const a = nodes.map((_, i) => i).sort((i, j) => angle(gridPos[i]) - angle(gridPos[j]));
+  const b = wirePts.map((_, i) => i).sort((i, j) => angle(wirePts[i]) - angle(wirePts[j]));
+  a.forEach((idx, k) => (wirePos[idx] = wirePts[b[k]]));
+}
+// Pseudo-3D: give every neuron a depth inside an ellipsoid so the brain can
+// turn as you scroll, and a scattered start point it assembles from.
+const BCX = 300, BCY = 215;
+const rand = (i: number, k: number) => {
+  const v = Math.sin(i * k) * 43758.5453;
+  return (v - Math.floor(v)) * 2 - 1;
+};
 const depthZ = nodes.map((n, i) => {
   const dx = (n.x - BCX) / 270, dy = (n.y - BCY) / 210;
-  return (rand(i, 78.233) * 2 - 1) * Math.sqrt(Math.max(0.05, 1 - dx * dx - dy * dy)) * 120;
+  return rand(i, 78.233) * Math.sqrt(Math.max(0.05, 1 - dx * dx - dy * dy)) * 120;
 });
 const dust = nodes.map((_, i) => {
-  const a = i * 2.39996, r = 230 + rand(i, 3.17) * 160;
+  const a = i * 2.39996;
+  const r = 230 + (rand(i, 3.17) + 1) * 80;
   return [BCX + Math.cos(a) * r * 1.25, BCY + Math.sin(a) * r * 0.75] as [number, number];
 });
+const nodeDist = nodes.map((n) => {
+  const [cx, cy] = centroids[n.r];
+  return Math.hypot(n.x - cx, n.y - cy);
+});
+const smooth = (x: number) => x * x * (3 - 2 * x);
 
-/* ---------- the four shapes after the brain --------------------------- */
-// Each shape is drawn by one function, used twice: in "mask" mode to sample
-// target points for the particles, and in "render" mode as the solid artwork.
+// Each neuron flies on its own gentle arc rather than a straight line.
+const bend = nodes.map((_, i) => (Math.sin(i * 12.9898) * 43758.5453) % 1);
 
-const HAND = "italic 600 1px Georgia, 'Times New Roman', serif";
-const font = (base: string, size: number) => base.replace("1px", `${size}px`);
-let SANS = "system-ui, sans-serif";
+/* ---------- helpers -------------------------------------------------- */
 
-function chalkboard(c: C2D, mode: Mode, w = 1) {
-  const m = mode === "mask";
-  if (!m) {
-    c.globalAlpha = w;
-    c.fillStyle = "#24292e";
-    c.beginPath();
-    c.roundRect(118, 56, 374, 266, 14);
-    c.fill();
-    c.strokeStyle = "rgba(255,255,255,0.08)";
-    c.lineWidth = 6;
-    c.stroke();
-  }
-  c.globalAlpha = m ? 1 : w;
-  c.fillStyle = m ? "#000" : rgba(CHALK, 0.95);
-  c.strokeStyle = m ? "#000" : rgba(CHALK, 0.7);
-  c.font = font(HAND, 46);
-  c.textAlign = "center";
-  c.textBaseline = "middle";
-  c.fillText("y = 2x + 1", 305, 122);
-  c.lineWidth = m ? 2.5 : 2;
-  c.lineCap = "round";
-  c.beginPath();
-  c.moveTo(178, 292);
-  c.lineTo(440, 292);
-  c.moveTo(192, 302);
-  c.lineTo(192, 176);
-  c.stroke();
-  c.strokeStyle = m ? "#000" : "rgba(246,231,161,0.95)";
-  c.lineWidth = m ? 3 : 2.6;
-  c.beginPath();
-  c.moveTo(204, 282);
-  c.lineTo(424, 186);
-  c.stroke();
-  if (!m) {
-    c.fillStyle = "rgba(246,231,161,0.95)";
-    for (const [x, y] of [[254, 260], [314, 234], [374, 208]]) {
-      c.beginPath();
-      c.arc(x, y, 3.6, 0, Math.PI * 2);
-      c.fill();
-    }
-    c.font = font(HAND, 15);
-    c.fillStyle = rgba(CHALK, 0.6);
-    c.fillText("what changes when x grows?", 305, 160);
-  }
-  c.globalAlpha = 1;
-}
-
-const NOTES: { x: number; y: number; r: number; fill: string; label: string }[] = [
-  { x: 112, y: 92, r: -0.05, fill: "#ffe48a", label: "Interviews" },
-  { x: 250, y: 196, r: 0.04, fill: "#ffc9dc", label: "Persona" },
-  { x: 388, y: 96, r: -0.03, fill: "#c4e2ff", label: "User flow" },
-];
-function stickyNotes(c: C2D, mode: Mode, w = 1) {
-  const m = mode === "mask";
-  c.globalAlpha = m ? 1 : w;
-  // arrows
-  c.strokeStyle = m ? "#000" : rgba(INK, 0.55);
-  c.lineWidth = m ? 2.5 : 1.6;
-  c.setLineDash(m ? [] : [5, 5]);
-  c.beginPath();
-  c.moveTo(178, 196);
-  c.quadraticCurveTo(190, 250, 244, 250);
-  c.moveTo(366, 250);
-  c.quadraticCurveTo(420, 250, 438, 198);
-  c.stroke();
-  c.setLineDash([]);
-  if (!m) {
-    c.fillStyle = rgba(INK, 0.55);
-    for (const [x, y, a] of [[244, 250, 0], [438, 198, -1.2]] as [number, number, number][]) {
-      c.save();
-      c.translate(x, y);
-      c.rotate(a);
-      c.beginPath();
-      c.moveTo(0, 0);
-      c.lineTo(-8, -4.5);
-      c.lineTo(-8, 4.5);
-      c.closePath();
-      c.fill();
-      c.restore();
-    }
-  }
-  for (const n of NOTES) {
-    c.save();
-    c.translate(n.x + 55, n.y + 48);
-    c.rotate(n.r);
-    if (m) {
-      c.strokeStyle = "#000";
-      c.lineWidth = 2.5;
-      c.strokeRect(-55, -48, 110, 96);
-    } else {
-      c.shadowColor = "rgba(26,29,34,0.16)";
-      c.shadowBlur = 14;
-      c.shadowOffsetY = 6;
-      c.fillStyle = n.fill;
-      c.fillRect(-55, -48, 110, 96);
-      c.shadowColor = "transparent";
-    }
-    c.fillStyle = m ? "#000" : rgba(INK, 0.9);
-    c.font = font(HAND, 17);
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-    c.fillText(n.label, 0, -6);
-    if (!m) {
-      c.strokeStyle = rgba(INK, 0.25);
-      c.lineWidth = 1.2;
-      c.beginPath();
-      c.moveTo(-30, 18);
-      c.lineTo(28, 18);
-      c.moveTo(-30, 28);
-      c.lineTo(12, 28);
-      c.stroke();
-    }
-    c.restore();
-  }
-  c.globalAlpha = 1;
-}
-
-const FRAMES = [
-  { x: 120, label: "Home" },
-  { x: 253, label: "Menu" },
-  { x: 386, label: "Cart" },
-];
-function figmaCanvas(c: C2D, mode: Mode, w = 1) {
-  const m = mode === "mask";
-  c.globalAlpha = m ? 1 : w;
-  if (!m) {
-    c.fillStyle = "#f3f4f6";
-    c.beginPath();
-    c.roundRect(90, 40, 430, 360, 16);
-    c.fill();
-    c.strokeStyle = "rgba(26,29,34,0.08)";
-    c.lineWidth = 1;
-    c.stroke();
-    // toolbar
-    c.fillStyle = "#ffffff";
-    c.beginPath();
-    c.roundRect(240, 52, 130, 26, 13);
-    c.fill();
-    for (let k = 0; k < 5; k++) {
-      c.fillStyle = k === 1 ? rgba(COBALT, 1) : "rgba(26,29,34,0.35)";
-      c.beginPath();
-      c.arc(258 + k * 24, 65, 4, 0, Math.PI * 2);
-      c.fill();
-    }
-  }
-  FRAMES.forEach((f, idx) => {
-    const y = 108, fw = 104, fh = 200;
-    if (!m) {
-      c.fillStyle = "rgba(26,29,34,0.5)";
-      c.font = `500 9px ${SANS}`;
-      c.textAlign = "left";
-      c.textBaseline = "alphabetic";
-      c.fillText(f.label, f.x, y - 6);
-      c.fillStyle = "#ffffff";
-      c.fillRect(f.x, y, fw, fh);
-    }
-    c.strokeStyle = m ? "#000" : idx === 1 ? rgba(COBALT, 1) : "rgba(26,29,34,0.14)";
-    c.lineWidth = m ? 2.5 : idx === 1 ? 1.6 : 1;
-    c.strokeRect(f.x, y, fw, fh);
-    const blocks: [number, number, number, number][] = [
-      [10, 12, 54, 8],
-      [10, 30, 84, 56],
-      [10, 98, 84, 22],
-      [10, 126, 84, 22],
-      [10, 154, 84, 22],
-    ];
-    for (const [bx, by, bw, bh] of blocks) {
-      if (m) {
-        c.strokeRect(f.x + bx, y + by, bw, bh);
-      } else {
-        c.fillStyle = idx === 1 && by === 30 ? rgba(COBALT, 0.85) : "rgba(26,29,34,0.07)";
-        c.beginPath();
-        c.roundRect(f.x + bx, y + by, bw, bh, 4);
-        c.fill();
-      }
-    }
-    if (!m && idx === 1) {
-      // auto layout spacing
-      c.fillStyle = "rgba(242,72,140,0.85)";
-      for (const gy of [120, 148]) c.fillRect(f.x + 10, y + gy, 84, 6);
-      // handles + size badge
-      c.fillStyle = "#ffffff";
-      c.strokeStyle = rgba(COBALT, 1);
-      c.lineWidth = 1.2;
-      for (const [hx, hy] of [[0, 0], [fw, 0], [0, fh], [fw, fh]]) {
-        c.fillRect(f.x + hx - 3, y + hy - 3, 6, 6);
-        c.strokeRect(f.x + hx - 3, y + hy - 3, 6, 6);
-      }
-      c.fillStyle = rgba(COBALT, 1);
-      c.beginPath();
-      c.roundRect(f.x + fw / 2 - 30, y + fh + 8, 60, 16, 4);
-      c.fill();
-      c.fillStyle = "#fff";
-      c.font = `600 8.5px ${SANS}`;
-      c.textAlign = "center";
-      c.textBaseline = "middle";
-      c.fillText("375 × 812", f.x + fw / 2, y + fh + 16.5);
-      // collaborator cursor
-      const cx = f.x + fw + 30, cy = y + fh - 30;
-      c.fillStyle = rgba(COBALT, 1);
-      c.beginPath();
-      c.moveTo(cx, cy);
-      c.lineTo(cx, cy + 15);
-      c.lineTo(cx + 4, cy + 11);
-      c.lineTo(cx + 11, cy + 11);
-      c.closePath();
-      c.fill();
-      c.beginPath();
-      c.roundRect(cx + 8, cy + 14, 34, 15, 7.5);
-      c.fill();
-      c.fillStyle = "#fff";
-      c.font = `600 8.5px ${SANS}`;
-      c.fillText("Talia", cx + 25, cy + 22);
-    }
-  });
-  c.globalAlpha = 1;
-}
-
-// The phone: Talia Alon Bakery's ordering screen.
-const PX = 210, PY = 20, PW = 190, PH = 400, PR = 30;
-const ROWS = [0, 1].map((i) => [PX + 14, PY + 196 + i * 58, PW - 28, 50] as const);
-const BTN = [PX + 18, PY + PH - 62, PW - 36, 38] as const;
-function phone(c: C2D, mode: Mode, w = 1, inter = 0) {
-  const m = mode === "mask";
-  c.globalAlpha = m ? 1 : w;
-  c.strokeStyle = m ? "#000" : rgba(INK, 0.9);
-  c.lineWidth = m ? 2.5 : 2;
-  if (!m) {
-    c.fillStyle = "#ffffff";
-    c.beginPath();
-    c.roundRect(PX, PY, PW, PH, PR);
-    c.fill();
-  }
-  c.beginPath();
-  c.roundRect(PX, PY, PW, PH, PR);
-  c.stroke();
-  if (m) {
-    c.strokeRect(PX + 14, PY + 62, PW - 28, 96);
-    for (const [x, y, rw, rh] of ROWS) c.strokeRect(x, y, rw, rh);
-    c.strokeRect(...BTN);
-    c.globalAlpha = 1;
-    return;
-  }
-  const txt = (s: string, x: number, y: number, size: number, weight: number, color: string, align: CanvasTextAlign = "left") => {
-    c.font = `${weight} ${size}px ${SANS}`;
-    c.textAlign = align;
-    c.textBaseline = "middle";
-    c.fillStyle = color;
-    c.fillText(s, x, y);
-  };
-  c.fillStyle = rgba(INK, 1);
-  c.beginPath();
-  c.roundRect(PX + PW / 2 - 30, PY + 10, 60, 16, 8);
-  c.fill();
-  txt("9:41", PX + 26, PY + 18, 9, 600, rgba(INK, 1));
-  txt("Talia Alon", PX + 16, PY + 44, 14, 600, rgba(INK, 1));
-  // bag icon + badge
-  c.strokeStyle = rgba(INK, 1);
-  c.lineWidth = 1.4;
-  c.beginPath();
-  c.roundRect(PX + PW - 32, PY + 38, 14, 13, 2.5);
-  c.stroke();
-  const added = inter > 0.55;
-  if (added) {
-    c.fillStyle = rgba(COBALT, 1);
-    c.beginPath();
-    c.arc(PX + PW - 17, PY + 37, 5.5, 0, Math.PI * 2);
-    c.fill();
-    txt("2", PX + PW - 17, PY + 37.5, 7, 700, "#fff", "center");
-  }
-  // hero
-  c.fillStyle = "#f4e6d4";
-  c.beginPath();
-  c.roundRect(PX + 14, PY + 62, PW - 28, 96, 14);
-  c.fill();
-  for (const [x, y, r] of [[PX + 62, PY + 112, 20], [PX + 98, PY + 104, 22], [PX + 134, PY + 114, 19]]) {
-    c.fillStyle = "#b9773f";
-    c.beginPath();
-    c.arc(x, y, r, 0, Math.PI * 2);
-    c.fill();
-    c.strokeStyle = "#f2d5ad";
-    c.lineWidth = 2.4;
-    c.beginPath();
-    for (let a = 0; a < Math.PI * 5; a += 0.2) {
-      const rr = (a / (Math.PI * 5)) * (r - 4);
-      const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
-      if (a === 0) c.moveTo(px, py);
-      else c.lineTo(px, py);
-    }
-    c.stroke();
-  }
-  txt("Fresh this week", PX + 16, PY + 178, 11, 600, rgba(INK, 1));
-  const items: [string, string][] = [
-    ["Kinder rolls", "Box of 7, ₪40"],
-    ["Nutella rolls", "Box of 7, ₪40"],
-  ];
-  ROWS.forEach(([x, y, rw, rh], i) => {
-    c.fillStyle = "#ffffff";
-    c.strokeStyle = rgba(INK, 0.1);
-    c.lineWidth = 1;
-    c.beginPath();
-    c.roundRect(x, y, rw, rh, 12);
-    c.fill();
-    c.stroke();
-    c.fillStyle = "#f4e6d4";
-    c.beginPath();
-    c.roundRect(x + 8, y + 8, 34, 34, 9);
-    c.fill();
-    c.fillStyle = "#b9773f";
-    c.beginPath();
-    c.arc(x + 25, y + 25, 9, 0, Math.PI * 2);
-    c.fill();
-    txt(items[i][0], x + 50, y + 18, 10.5, 600, rgba(INK, 1));
-    txt(items[i][1], x + 50, y + 33, 8.5, 400, rgba(INK, 0.5));
-    // quantity
-    const q = added ? 1 : 0;
-    c.fillStyle = q ? rgba(COBALT, 1) : rgba(INK, 0.06);
-    c.beginPath();
-    c.arc(x + rw - 18, y + 25, 10, 0, Math.PI * 2);
-    c.fill();
-    txt(q ? "1" : "+", x + rw - 18, y + 25.5, 10, 600, q ? "#fff" : rgba(INK, 0.7), "center");
-  });
-  // primary action
-  const press = Math.sin(Math.PI * seg(inter, 0.6, 0.75));
-  const sc = 1 - 0.05 * press;
-  const [bx, by, bw, bh] = BTN;
-  c.fillStyle = rgba(COBALT, 1);
-  c.beginPath();
-  c.roundRect(bx + (bw * (1 - sc)) / 2, by + (bh * (1 - sc)) / 2, bw * sc, bh * sc, 19);
-  c.fill();
-  txt(added ? "Send order · ₪80" : "Send order", bx + bw / 2, by + bh / 2 + 0.5, 10.5, 600, "#fff", "center");
-  c.fillStyle = rgba(INK, 0.9);
-  c.beginPath();
-  c.roundRect(PX + PW / 2 - 34, PY + PH - 12, 68, 3.5, 2);
-  c.fill();
-
-  // cursor: taps "+" on both rows, then "Send order"
-  if (inter > 0.01) {
-    const pts: [number, number][] = [
-      [PX + PW + 60, PY + PH - 10],
-      [ROWS[0][0] + ROWS[0][2] - 18, ROWS[0][1] + 25],
-      [ROWS[1][0] + ROWS[1][2] - 18, ROWS[1][1] + 25],
-      [bx + bw * 0.6, by + bh * 0.6],
-    ];
-    const tt = seg(inter, 0, 0.72) * 3;
-    const k = Math.min(2, Math.floor(tt));
-    const f = ease(tt - k);
-    const cx = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f;
-    const cy = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f;
-    const curA = Math.min(seg(inter, 0, 0.08), 1 - seg(inter, 0.88, 1));
-    c.save();
-    c.globalAlpha = w * curA;
-    c.translate(cx, cy);
-    c.beginPath();
-    c.moveTo(0, 0);
-    c.lineTo(0, 17);
-    c.lineTo(4.5, 13);
-    c.lineTo(8, 20);
-    c.lineTo(10.5, 19);
-    c.lineTo(7, 12);
-    c.lineTo(12.5, 12);
-    c.closePath();
-    c.fillStyle = rgba(INK, 1);
-    c.fill();
-    c.strokeStyle = "#fff";
-    c.lineWidth = 1.4;
-    c.stroke();
-    c.restore();
-  }
-  // toast
-  const ta = easeOut(seg(inter, 0.76, 0.92));
-  if (ta > 0) {
-    c.save();
-    c.globalAlpha = w * ta;
-    const ty = PY + 12 - (1 - ta) * 14;
-    c.shadowColor = "rgba(26,29,34,0.2)";
-    c.shadowBlur = 14;
-    c.shadowOffsetY = 4;
-    c.fillStyle = rgba(INK, 1);
-    c.beginPath();
-    c.roundRect(PX + 14, ty, PW - 28, 30, 10);
-    c.fill();
-    c.shadowColor = "transparent";
-    c.fillStyle = "#2f9e5b";
-    c.beginPath();
-    c.arc(PX + 30, ty + 15, 6, 0, Math.PI * 2);
-    c.fill();
-    txt("✓", PX + 30, ty + 15.5, 7, 700, "#fff", "center");
-    txt("Order sent to Talia", PX + 42, ty + 15, 9.5, 500, "#fff");
-    c.restore();
-  }
-  c.globalAlpha = 1;
-}
-
-const SHAPES = [null, chalkboard, stickyNotes, figmaCanvas, phone] as const;
-const SHAPE_COLOR: RGB[] = [COBALT, CHALK, INK, COBALT, INK];
-type Transition = "pour" | "burst" | "snap" | "fold";
-const TRANSITIONS: Transition[] = ["pour", "burst", "snap", "fold"];
-
-/** Sample N points on a shape's strokes, ordered left to right. */
-function sampleShape(draw: (c: C2D, m: Mode) => void): [number, number][] {
-  const S = 2;
-  const cv = document.createElement("canvas");
-  cv.width = 610 * S;
-  cv.height = 440 * S;
-  const c = cv.getContext("2d", { willReadFrequently: true })!;
-  c.scale(S, S);
-  draw(c, "mask");
-  const data = c.getImageData(0, 0, cv.width, cv.height).data;
-  const pts: [number, number][] = [];
-  for (let y = 0; y < cv.height; y += 3) {
-    for (let x = 0; x < cv.width; x += 3) {
-      if (data[(y * cv.width + x) * 4 + 3] > 120) pts.push([x / S, y / S]);
-    }
-  }
-  // deterministic shuffle, then take N spread evenly
-  for (let i = pts.length - 1; i > 0; i--) {
-    const j = Math.floor(rand(i, 12.9898) * (i + 1));
-    [pts[i], pts[j]] = [pts[j], pts[i]];
-  }
-  const out: [number, number][] = [];
-  for (let i = 0; i < N; i++) out.push(pts.length ? pts[i % pts.length] : [BCX, BCY]);
-  return out.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-}
-
-// Particles keep their left-to-right order through every shape.
-const byX = nodes.map((_, i) => i).sort((a, b) => nodes[a].x - nodes[b].x);
-const rankOf = new Array<number>(N);
-byX.forEach((idx, r) => (rankOf[idx] = r));
+const clamp = (v: number) => Math.max(0, Math.min(1, v));
+const seg = (v: number, a: number, b: number) => clamp((v - a) / (b - a));
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 /* ---------- component ------------------------------------------------ */
 
@@ -569,33 +209,26 @@ export default function Background() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [active, setActive] = useState(-1);
+  const [stage, setStage] = useState(-1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    SANS = getComputedStyle(canvas).fontFamily || SANS;
+    const font = getComputedStyle(canvas).fontFamily;
 
-    // targets[shape][particle]
-    let targets: [number, number][][] = [];
-    const buildTargets = () => {
-      targets = SHAPES.map((fn) => {
-        if (!fn) return [];
-        const pts = sampleShape((c, m) => fn(c, m));
-        return nodes.map((_, i) => pts[rankOf[i]]);
-      });
-    };
-    buildTargets();
-    document.fonts?.ready.then(buildTargets);
-
+    // Everything below is a function of scroll position, lightly smoothed, so
+    // scrolling back up plays the whole thing in reverse.
     const intensity = Object.fromEntries(REGIONS.map((r) => [r, 0])) as Record<Region, number>;
     const nodeK = new Float32Array(N);
+    const depth = new Float32Array(N);
     const pulses: { e: number; t: number; v: number }[] = [];
-    let t = 0;
+    let morph = 0;
     let form = 0;
     let turn = 0;
     let lastIdx = -2;
+    let lastStage = -2;
     let frame = 0;
     let running = false;
     let prevT = performance.now();
@@ -615,51 +248,65 @@ export default function Background() {
       const dt = Math.min(0.05, (now - prevT) / 1000);
       prevT = now;
       const vh = window.innerHeight;
-      const k = reduce ? 1 : 1 - Math.exp(-dt * 8);
+
+      const k = reduce ? 1 : 1 - Math.exp(-dt * 9);
       const els = stepRefs.current;
       const sec = canvas.closest("section")?.getBoundingClientRect();
-      if (!sec || els.some((e) => !e)) {
+      const first = els[0]?.getBoundingClientRect();
+      const lastEl = els[steps.length - 1];
+      const lastR = lastEl?.getBoundingClientRect();
+      if (!sec || !first || !lastR) {
         if (running) frame = requestAnimationFrame(tick);
         return;
       }
-      const rects = els.map((e) => e!.getBoundingClientRect());
-      const centers = rects.map((r, i) => (i === rects.length - 1 ? r.top + vh * 0.3 : r.top + r.height / 2));
-      const mid = vh * 0.5;
 
-      // continuous position along the timeline: 0 = first step centred, 5 = last
-      let tt = 0;
-      if (centers[0] > mid) tt = 0;
-      else if (centers[centers.length - 1] <= mid) tt = centers.length - 1;
-      else {
-        for (let i = 0; i < centers.length - 1; i++) {
-          if (centers[i] <= mid && centers[i + 1] > mid) {
-            tt = i + (mid - centers[i]) / (centers[i + 1] - centers[i]);
-            break;
-          }
-        }
-      }
-      t += (tt - t) * k;
+      // 1. neurons assemble as the section scrolls in
       form += (clamp((vh * 0.95 - sec.top) / (vh * 0.75)) - form) * k;
-      turn += (clamp((vh - centers[0]) / vh) - turn) * k;
-
-      const idx = Math.min(steps.length - 1, Math.round(t));
-      const visibleIdx = centers[0] > vh * 0.75 ? -1 : idx;
-      if (visibleIdx !== lastIdx) {
-        lastIdx = visibleIdx;
-        setActive(visibleIdx);
+      // 2. the brain turns slowly across the whole timeline
+      turn += (clamp((vh * 0.5 - first.top) / Math.max(1, lastR.top - first.top)) - turn) * k;
+      // 3. how centred each step is, 0..1
+      const focus = steps.map((_, i) => {
+        const r = els[i]!.getBoundingClientRect();
+        const c = i === steps.length - 1 ? r.top + vh * 0.3 : r.top + r.height / 2;
+        return smooth(clamp(1 - Math.abs(c - vh * 0.5) / (vh * 0.55)));
+      });
+      let idx = -1;
+      let best = 0.2;
+      focus.forEach((f, i) => {
+        if (f > best) {
+          best = f;
+          idx = i;
+        }
+      });
+      if (idx !== lastIdx) {
+        lastIdx = idx;
+        setActive(idx);
       }
-
-      // brain lights region by region as the first step scrolls in
-      const light = clamp((vh * 0.95 - centers[0]) / (vh * 0.45));
       for (const r of REGIONS) {
-        const goal = smooth(seg(light, LIGHT_AT[r], LIGHT_AT[r] + 0.3));
+        let goal = 0;
+        steps.forEach((st, i) => {
+          if (st.regions.includes(r)) goal = Math.max(goal, focus[i]);
+        });
         intensity[r] += (goal - intensity[r]) * k;
       }
+      // light spreads out from the centre of each region as a step scrolls in
       for (let i = 0; i < N; i++) {
-        const goal = smooth(clamp((intensity[nodes[i].r] * 300 - nodeDist[i]) / 70));
+        const f = intensity[nodes[i].r];
+        const goal = smooth(clamp((f * 300 - nodeDist[i]) / 70));
         nodeK[i] += (goal - nodeK[i]) * k;
       }
-      if (!reduce && t < 1 && pulses.length < 30 && Math.random() < 0.4) {
+
+      // 4. the final design-process morph
+      const target = clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
+      morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 7));
+      const st = morph < 0.02 ? -1 : Math.min(3, Math.floor(morph * 4 + 0.15));
+      if (st !== lastStage) {
+        lastStage = st;
+        setStage(st);
+      }
+
+      const anyLit = REGIONS.some((r) => intensity[r] > 0.3);
+      if (!reduce && anyLit && pulses.length < 30 && Math.random() < 0.4) {
         const e = Math.floor(Math.random() * edges.length);
         const [a, b] = edges[e];
         if (nodeK[a] > 0.4 || nodeK[b] > 0.4) pulses.push({ e, t: 0, v: 0.8 + Math.random() * 1.2 });
@@ -669,188 +316,405 @@ export default function Background() {
       if (running) frame = requestAnimationFrame(tick);
     };
 
+    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+    };
+
     const draw = (now: number, dt: number) => {
       const { width: w, height: h } = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, w, h);
-      if (!targets.length) return;
       const s = Math.min(w / 610, h / 440);
       const ox = (w - 610 * s) / 2;
       const oy = (h - 440 * s) / 2;
       const X = (x: number) => ox + x * s;
       const Y = (y: number) => oy + y * s;
-      const art = (fn: (c: C2D) => void) => {
-        ctx.save();
-        ctx.translate(ox, oy);
-        ctx.scale(s, s);
-        fn(ctx);
-        ctx.restore();
+      const txt = (str: string, x: number, y: number, size: number, weight: number, color: string, align: CanvasTextAlign = "left") => {
+        ctx.font = `${weight} ${size * s}px ${font}`;
+        ctx.textAlign = align;
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = color;
+        ctx.fillText(str, X(x), Y(y));
       };
 
-      // which shapes are we between?
-      const last = SHAPES.length - 1;
-      const a = Math.min(last, Math.floor(t));
-      const f = t - a;
-      const m = a >= last ? 0 : smooth(seg(f, 0.15, 0.85));
-      const inter = a >= last ? seg(t, last, last + 0.85) : 0;
-      const b = Math.min(last, a + 1);
-      const type = TRANSITIONS[Math.min(a, TRANSITIONS.length - 1)];
-      const wSrc = 1 - smooth(clamp(m * 2.4));
-      const wDst = smooth(clamp(m * 2 - 1));
+      // Stage progress
+      const s1 = seg(morph, 0, 0.3); // brain -> grid
+      const s2 = seg(morph, 0.24, 0.52); // grid -> wireframe
+      const s3 = seg(morph, 0.5, 0.76); // wireframe -> interface
+      const s4 = seg(morph, 0.76, 1); // interaction
+      const brainA = 1 - ease(clamp(s1 * 1.8));
 
-      /* positions */
-      const time = now / 1000;
-      const th = (turn - 0.5) * 0.9;
-      const cosT = Math.cos(th), sinT = Math.sin(th);
-      const brainAt = (i: number): [number, number] => {
-        const n = nodes[i];
-        const drift = reduce ? 0 : 1.2;
-        let x = BCX + (n.x - BCX) * cosT + depthZ[i] * sinT + Math.sin(time * 0.7 + i * 1.7) * drift;
-        let y = n.y + Math.cos(time * 0.6 + i * 2.3) * drift;
-        const ff = ease(clamp(form * 1.6 - (1 - rankOf[i] / N) * 0.6));
-        x = dust[i][0] + (x - dust[i][0]) * ff;
-        y = dust[i][1] + (y - dust[i][1]) * ff;
-        return [x, y];
-      };
-      const at = (shape: number, i: number): [number, number] => (shape === 0 ? brainAt(i) : targets[shape][i]);
-
+      /* --- positions --- */
+      const t = now / 1000;
       const pos: [number, number][] = new Array(N);
-      const prog = new Float32Array(N);
+      const th = (turn - 0.5) * 0.95 * (1 - ease(s1));
+      const cosT = Math.cos(th), sinT = Math.sin(th);
       for (let i = 0; i < N; i++) {
-        const p0 = at(a, i);
-        if (m <= 0) {
-          pos[i] = p0;
-          continue;
-        }
-        const p3 = at(b, i);
-        let st: number;
-        if (type === "pour") st = (p3[0] - 118) / 374;
-        else if (type === "burst") st = rand(i, 4.1);
-        else if (type === "snap") st = (p3[1] - 40) / 360;
-        else st = Math.hypot(p3[0] - 305, p3[1] - 220) / 260;
-        const q = clamp(m * 1.7 - clamp(st) * 0.7);
-        prog[i] = q;
-        let p1: [number, number], p2: [number, number], e: number;
-        if (type === "pour") {
-          // drip down, then get drawn on from above, left to right
-          p1 = [p0[0] + (rand(i, 9.7) - 0.5) * 20, Math.max(p0[1], p3[1]) + 120 + rand(i, 2.2) * 60];
-          p2 = [p3[0] - 30, p3[1] - 50];
-          e = ease(q);
-        } else if (type === "burst") {
-          const dx = p0[0] - 305, dy = p0[1] - 190;
-          p1 = [p0[0] + dx * 0.9 + (rand(i, 5.5) - 0.5) * 120, p0[1] + dy * 0.9 + (rand(i, 6.6) - 0.5) * 120];
-          p2 = [p3[0] + (rand(i, 7.7) - 0.5) * 60, p3[1] - 40];
-          e = ease(q);
-        } else if (type === "snap") {
-          p1 = [p0[0], p0[1]];
-          p2 = [p3[0], p3[1]];
-          e = backOut(q);
-        } else {
-          // fold inward on a spiral
-          const cx = 305, cy = 220;
-          p1 = [cx - (p0[1] - cy) * 0.8, cy + (p0[0] - cx) * 0.5];
-          p2 = [cx + (p3[1] - cy) * 0.6, cy - (p3[0] - cx) * 0.3];
-          e = ease(q);
-        }
-        pos[i] = [bez(p0[0], p1[0], p2[0], p3[0], e), bez(p0[1], p1[1], p2[1], p3[1], e)];
+        const n = nodes[i];
+        const drift = reduce ? 0 : (1 - s1) * 1.2;
+        const rx = n.x - BCX;
+        // turn around the vertical axis
+        let bx = BCX + rx * cosT + depthZ[i] * sinT + Math.sin(t * 0.7 + i * 1.7) * drift;
+        let by = n.y + Math.cos(t * 0.6 + i * 2.3) * drift;
+        depth[i] = (depthZ[i] * cosT - rx * sinT) / 140;
+        // assemble from scattered dust
+        const ff = ease(clamp(form * 1.6 - (1 - order[i]) * 0.6));
+        bx = dust[i][0] + (bx - dust[i][0]) * ff;
+        by = dust[i][1] + (by - dust[i][1]) * ff;
+        const a1 = ease(clamp(s1 * 1.5 - order[i] * 0.5));
+        const [gx, gy] = gridPos[i];
+        // quadratic arc
+        const mx = (bx + gx) / 2 + (gy - by) * bend[i] * 0.35;
+        const my = (by + gy) / 2 + (bx - gx) * bend[i] * 0.35;
+        const u = 1 - a1;
+        let x = u * u * bx + 2 * u * a1 * mx + a1 * a1 * gx;
+        let y = u * u * by + 2 * u * a1 * my + a1 * a1 * gy;
+        const a2 = ease(clamp(s2 * 1.5 - order[i] * 0.5));
+        x += (wirePos[i][0] - x) * a2;
+        y += (wirePos[i][1] - y) * a2;
+        pos[i] = [X(x), Y(y)];
       }
 
-      /* solid artwork under the particles */
-      if (a > 0 && wSrc > 0.01) art((c) => SHAPES[a]!(c, "render", wSrc, inter));
-      if (b > 0 && b !== a && wDst > 0.01) art((c) => SHAPES[b]!(c, "render", wDst, 0));
+      /* --- brain: outline, connections, signals --- */
+      if (brainA > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = brainA * ease(clamp(form * 1.4 - 0.4));
+        const OX = (x: number) => X(BCX + (x - BCX) * cosT);
+        ctx.strokeStyle = rgba(INK, 0.2);
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        for (let i = 0; i <= outline.length; i++) {
+          const p0 = outline[i % outline.length];
+          const p1 = outline[(i + 1) % outline.length];
+          const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
+          if (i === 0) ctx.moveTo(OX(mx), Y(my));
+          else ctx.quadraticCurveTo(OX(p0[0]), Y(p0[1]), OX(mx), Y(my));
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(OX(452), Y(330), 72 * s * Math.abs(cosT), 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
+        ctx.moveTo(OX(378), Y(318));
+        ctx.lineTo(OX(384), Y(410));
+        ctx.moveTo(OX(410), Y(312));
+        ctx.lineTo(OX(420), Y(410));
+        ctx.stroke();
+        ctx.globalAlpha = brainA * form * form;
 
-      /* brain outline + connections */
-      if (a === 0) {
-        const outA = (1 - smooth(clamp(m * 3))) * ease(clamp(form * 1.4 - 0.4));
-        if (outA > 0.01) {
-          ctx.save();
-          ctx.globalAlpha = outA;
-          ctx.strokeStyle = rgba(INK, 0.2);
-          ctx.lineWidth = 1.4;
-          const OX = (x: number) => X(BCX + (x - BCX) * cosT);
+        for (const [a, b] of edges) {
+          const k = Math.min(nodeK[a], nodeK[b]);
+          const dep = 0.75 + 0.25 * Math.max(-1, Math.min(1, (depth[a] + depth[b]) / 2));
+          ctx.strokeStyle = rgba(mix(INK, COBALT, k), (0.1 + k * 0.42) * dep);
+          ctx.lineWidth = 1 + k * 0.5;
           ctx.beginPath();
-          for (let i = 0; i <= outline.length; i++) {
-            const p0 = outline[i % outline.length];
-            const p1 = outline[(i + 1) % outline.length];
-            const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
-            if (i === 0) ctx.moveTo(OX(mx), Y(my));
-            else ctx.quadraticCurveTo(OX(p0[0]), Y(p0[1]), OX(mx), Y(my));
+          ctx.moveTo(pos[a][0], pos[a][1]);
+          ctx.lineTo(pos[b][0], pos[b][1]);
+          ctx.stroke();
+        }
+
+        for (let i = pulses.length - 1; i >= 0; i--) {
+          const p = pulses[i];
+          p.t += p.v * dt;
+          if (p.t >= 1) {
+            pulses.splice(i, 1);
+            continue;
           }
-          ctx.stroke();
+          const [a, b] = edges[p.e];
+          const x = pos[a][0] + (pos[b][0] - pos[a][0]) * p.t;
+          const y = pos[a][1] + (pos[b][1] - pos[a][1]) * p.t;
+          const fade = Math.sin(p.t * Math.PI);
+          ctx.fillStyle = rgba(COBALT, 0.25 * fade);
           ctx.beginPath();
-          ctx.ellipse(OX(452), Y(330), 72 * s * Math.abs(cosT), 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
-          ctx.moveTo(OX(378), Y(318));
-          ctx.lineTo(OX(384), Y(410));
-          ctx.moveTo(OX(410), Y(312));
-          ctx.lineTo(OX(420), Y(410));
+          ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = rgba(COBALT, 0.95 * fade);
+          ctx.beginPath();
+          ctx.arc(x, y, 2.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      /* --- stage 1: layout grid columns --- */
+      const gridA = Math.min(ease(clamp(s1 * 1.6 - 0.3)), 1 - ease(s3));
+      if (gridA > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = gridA;
+        const m = 14, g = 10, cw = (PW - m * 2 - g * 3) / 4;
+        ctx.fillStyle = rgba(COBALT, 0.07);
+        for (let c = 0; c < 4; c++) ctx.fillRect(X(PX + m + c * (cw + g)), Y(PY + 10), cw * s, (PH - 20) * s);
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = rgba(COBALT, 0.35);
+        ctx.lineWidth = 1;
+        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (s2 < 0.5) txt("4-column grid, 8pt rhythm", PX + PW + 14, PY + 30, 11, 500, rgba(COBALT, 0.9 * (1 - s2 * 2)));
+        ctx.restore();
+      }
+
+      /* --- stage 2: wireframe --- */
+      const frameDraw = ease(clamp(s2 * 1.6));
+      if (frameDraw > 0.001) {
+        const per = 2 * (PW + PH) * s;
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = rgba(INK, 0.9);
+        ctx.setLineDash([per * frameDraw, per]);
+        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
+        ctx.stroke();
+        ctx.restore();
+      }
+      const wireA = Math.min(ease(clamp(s2 * 1.5 - 0.35)), 1 - ease(clamp(s3 * 1.4)));
+      if (wireA > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = wireA;
+        ctx.setLineDash([4, 3]);
+        ctx.lineWidth = 1.1;
+        ctx.strokeStyle = rgba(INK, 0.45);
+        ctx.fillStyle = rgba(INK, 0.04);
+        for (const [x, y, rw, rh, r] of wireRects.slice(1)) {
+          roundRect(X(x), Y(y), rw * s, rh * s, r * s);
+          ctx.fill();
           ctx.stroke();
+        }
+        ctx.setLineDash([]);
+        // crossed image placeholder in the card, like a real wireframe
+        const [cx, cy, cw2, ch] = UI.card;
+        ctx.beginPath();
+        ctx.moveTo(X(cx), Y(cy));
+        ctx.lineTo(X(cx + cw2), Y(cy + ch));
+        ctx.moveTo(X(cx + cw2), Y(cy));
+        ctx.lineTo(X(cx), Y(cy + ch));
+        ctx.strokeStyle = rgba(INK, 0.15);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      /* --- stage 3: interface --- */
+      if (s3 > 0.001) {
+        const part = (k: number) => easeOut(clamp(s3 * 1.8 - k * 0.8)); // staggered build
+        ctx.save();
+        // screen
+        ctx.globalAlpha = part(0);
+        roundRect(X(PX + 1), Y(PY + 1), (PW - 2) * s, (PH - 2) * s, (PR - 1) * s);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        roundRect(X(PX + PW / 2 - 30), Y(PY + 10), 60 * s, 16 * s, 8 * s);
+        ctx.fillStyle = rgba(INK, 1);
+        ctx.fill();
+        txt("9:41", PX + 26, PY + 18, 9, 600, rgba(INK, 1));
+        txt("Hi Noa", PX + 16, PY + 40, 9.5, 400, rgba(INK, 0.55));
+        txt("Keep going", PX + 16, PY + 56, 15, 600, rgba(INK, 1));
+
+        // card
+        const cA = part(0.15);
+        ctx.globalAlpha = cA;
+        const [kx, ky, kw, kh, kr] = UI.card;
+        const lift = (1 - cA) * 8;
+        roundRect(X(kx), Y(ky + lift), kw * s, kh * s, kr * s);
+        ctx.fillStyle = rgba(COBALT, 1);
+        ctx.fill();
+        txt("Algebra, unit 4", kx + 14, ky + lift + 18, 8.5, 400, "rgba(255,255,255,0.75)");
+        txt("Linear equations", kx + 14, ky + lift + 36, 14, 600, "#ffffff");
+        const prog = 0.6 + 0.08 * ease(seg(s4, 0.55, 0.85));
+        txt(`${Math.round(prog * 100)}% complete`, kx + 14, ky + lift + 66, 8.5, 400, "rgba(255,255,255,0.8)");
+        roundRect(X(kx + 14), Y(ky + lift + 78), 100 * s, 4 * s, 2 * s);
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.fill();
+        roundRect(X(kx + 14), Y(ky + lift + 78), 100 * prog * s, 4 * s, 2 * s);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(X(kx + kw - 30), Y(ky + lift + kh - 30), 16 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        const px0 = X(kx + kw - 33), py0 = Y(ky + lift + kh - 30);
+        ctx.moveTo(px0, py0 - 6 * s);
+        ctx.lineTo(px0 + 9 * s, py0);
+        ctx.lineTo(px0, py0 + 6 * s);
+        ctx.closePath();
+        ctx.fillStyle = rgba(COBALT, 1);
+        ctx.fill();
+
+        // list
+        ctx.globalAlpha = part(0.3);
+        txt("This week", PX + 16, PY + 184, 10.5, 600, rgba(INK, 1));
+        txt("See all", PX + PW - 16, PY + 184, 9, 400, rgba(INK, 0.5), "right");
+        const tiles: [RGB, string, string, string][] = [
+          [COBALT, "y=x", "Graphing lines", "6 lessons, due Thursday"],
+          [[226, 140, 40], "?", "Word problems", "4 lessons, due Sunday"],
+          [[47, 158, 91], "✓", "Quiz: equations", "15 minutes"],
+        ];
+        UI.rows.forEach(([x, y, rw, rh, r], i) => {
+          ctx.globalAlpha = part(0.35 + i * 0.08);
+          const dx = (1 - ctx.globalAlpha) * 10;
+          roundRect(X(x + dx), Y(y), rw * s, rh * s, r * s);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = rgba(INK, 0.1);
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          roundRect(X(x + dx + 8), Y(y + 7.5), 23 * s, 23 * s, 7 * s);
+          ctx.fillStyle = rgba(tiles[i][0], 0.14);
+          ctx.fill();
+          txt(tiles[i][1], x + dx + 20, y + 19.5, 8, 600, rgba(tiles[i][0], 1), "center");
+          txt(tiles[i][2], x + dx + 40, y + 14, 10, 600, rgba(INK, 1));
+          txt(tiles[i][3], x + dx + 40, y + 26, 8, 400, rgba(INK, 0.5));
+        });
+
+        // primary action
+        const [bx, by, bw, bh, br] = UI.button;
+        const press = Math.sin(Math.PI * seg(s4, 0.45, 0.62));
+        const sc = 1 - 0.04 * press;
+        ctx.globalAlpha = part(0.6);
+        const done = s4 > 0.6;
+        roundRect(X(bx + (bw * (1 - sc)) / 2), Y(by + (bh * (1 - sc)) / 2), bw * sc * s, bh * sc * s, br * s);
+        ctx.fillStyle = rgba(INK, 1);
+        ctx.fill();
+        txt(done ? "Continue lesson" : "Start lesson", bx + bw / 2, by + bh / 2 + 0.5, 10.5, 600, "#ffffff", "center");
+        roundRect(X(PX + PW / 2 - 34), Y(PY + PH - 12), 68 * s, 3.5 * s, 2 * s);
+        ctx.fillStyle = rgba(INK, 0.9);
+        ctx.fill();
+        ctx.restore();
+
+        // labels beside the phone: what each part is for
+        if (s4 < 0.3 && w > 420) {
+          const la = part(0.7) * (1 - s4 / 0.3);
+          ctx.save();
+          ctx.globalAlpha = la;
+          const notes: [number, string][] = [
+            [ky + kh / 2, "Primary task first"],
+            [UI.rows[1][1] + 20, "Scannable list, big tap targets"],
+            [by + bh / 2, "One clear next step"],
+          ];
+          for (const [ny, label] of notes) {
+            ctx.strokeStyle = rgba(COBALT, 0.6);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(X(PX + PW + 6), Y(ny));
+            ctx.lineTo(X(PX + PW + 22), Y(ny));
+            ctx.stroke();
+            txt(label, PX + PW + 28, ny, 10, 500, rgba(COBALT, 1));
+          }
           ctx.restore();
         }
-        // connections stretch like threads of liquid, then snap
-        ctx.save();
-        for (const [ea, eb] of edges) {
-          const stretch = Math.max(prog[ea], prog[eb]);
-          const al = form * form * (1 - smooth(clamp(stretch * 2.5)));
-          if (al < 0.01) continue;
-          const kk = Math.min(nodeK[ea], nodeK[eb]);
-          ctx.strokeStyle = rgba(mix(INK, COBALT, kk), (0.1 + kk * 0.42) * al);
-          ctx.lineWidth = 1 + kk * 0.5;
-          ctx.beginPath();
-          ctx.moveTo(X(pos[ea][0]), Y(pos[ea][1]));
-          ctx.lineTo(X(pos[eb][0]), Y(pos[eb][1]));
-          ctx.stroke();
-        }
-        if (m < 0.2) {
-          for (let i = pulses.length - 1; i >= 0; i--) {
-            const p = pulses[i];
-            p.t += p.v * dt;
-            if (p.t >= 1) {
-              pulses.splice(i, 1);
-              continue;
-            }
-            const [pa, pb] = edges[p.e];
-            const x = X(pos[pa][0] + (pos[pb][0] - pos[pa][0]) * p.t);
-            const y = Y(pos[pa][1] + (pos[pb][1] - pos[pa][1]) * p.t);
-            const fade = Math.sin(p.t * Math.PI) * (1 - m * 5);
-            ctx.fillStyle = rgba(COBALT, 0.25 * fade);
-            ctx.beginPath();
-            ctx.arc(x, y, 5.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = rgba(COBALT, 0.95 * fade);
-            ctx.beginPath();
-            ctx.arc(x, y, 2.1, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        } else pulses.length = 0;
-        ctx.restore();
       }
 
-      /* particles */
-      const settled = (a > 0 ? wSrc : 0) + (b > 0 ? wDst : 0);
-      const partA = 1 - 0.82 * clamp(settled);
-      if (partA > 0.01) {
-        // chalk-white only reads once the board is behind it
-        const colorAt = (shape: number, wBoard: number) => (shape === 1 ? mix(INK, CHALK, wBoard) : SHAPE_COLOR[shape]);
-        const cA = colorAt(a, a === 1 ? wSrc : 1), cB = colorAt(b, b === 1 ? wDst : 1);
+      /* --- neurons (drawn over the build-up, fade as the UI lands) --- */
+      const dotA = 1 - ease(clamp(s3 * 1.6));
+      if (dotA > 0.01) {
         for (let i = 0; i < N; i++) {
-          const q = prog[i];
-          let col = mix(cA, cB, q);
-          let kk = 0;
-          if (a === 0) {
-            kk = nodeK[i] * (1 - q);
-            col = mix(mix(INK, COBALT, kk), cB, q);
-          }
-          const x = X(pos[i][0]), y = Y(pos[i][1]);
-          const r = (2.3 + kk * 1.5) * Math.max(0.8, s) * (1 - Math.sin(q * Math.PI) * 0.25);
-          if (kk > 0.05) {
-            ctx.fillStyle = rgba(COBALT, 0.11 * kk * partA);
+          let k = nodeK[i] * brainA;
+          k = Math.min(1.4, k);
+          const [x, y] = pos[i];
+          const dep = Math.max(-1, Math.min(1, depth[i])) * (1 - s1);
+          const r = (2.3 + Math.min(1, k) * 1.5) * Math.max(0.8, s) * (1 - s1 * 0.25) * (1 + dep * 0.22);
+          if (k > 0.05) {
+            ctx.fillStyle = rgba(COBALT, 0.11 * k * dotA);
             ctx.beginPath();
             ctx.arc(x, y, r * 3.4, 0, Math.PI * 2);
             ctx.fill();
           }
-          ctx.fillStyle = rgba(col, (0.45 + kk * 0.5 + (a > 0 || q > 0 ? 0.35 : 0)) * partA * (0.35 + 0.65 * form));
+          const c = mix(INK, COBALT, Math.max(Math.min(1, k), s1 * 0.85));
+          ctx.fillStyle = rgba(c, (0.38 + Math.min(1, k) * 0.55 + s1 * 0.4) * dotA * (0.72 + 0.28 * (dep + 1) / 2) * (0.35 + 0.65 * form));
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
+        }
+      }
+
+      /* --- region notes --- */
+      if (w > 360 && brainA > 0.05) {
+        ctx.font = `500 ${Math.round(Math.max(11, 13 * s))}px ${font}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (const r of REGIONS) {
+          const name = REGION_NAMES[r];
+          const k = intensity[r] * brainA;
+          if (!name || k < 0.08) continue;
+          const [lx, cy] = labelPos[r];
+          const cx = BCX + (lx - BCX) * cosT;
+          const ph = Math.max(20, 24 * s);
+          const pw = ctx.measureText(name).width + ph * 0.9;
+          ctx.globalAlpha = Math.min(1, k * 1.3);
+          roundRect(X(cx) - pw / 2, Y(cy) - ph / 2 + (1 - Math.min(1, k)) * 6, pw, ph, ph / 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = rgba(COBALT, 0.35);
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = rgba(COBALT, 1);
+          ctx.fillText(name, X(cx), Y(cy) + 0.5 + (1 - Math.min(1, k)) * 6);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      /* --- stage 4: a tap, then confirmation --- */
+      if (s4 > 0.001) {
+        const [bx, by, bw, bh] = UI.button;
+        const tx = bx + bw * 0.62, ty = by + bh * 0.6;
+        const travel = ease(seg(s4, 0, 0.45));
+        const sx = PX + PW + 70, sy = PY + PH + 30;
+        const cx = sx + (tx - sx) * travel + Math.sin(travel * Math.PI) * -18;
+        const cy = sy + (ty - sy) * travel;
+        const curA = Math.min(seg(s4, 0, 0.12), 1 - seg(s4, 0.85, 1));
+        // ripple
+        const rp = seg(s4, 0.48, 0.78);
+        if (rp > 0 && rp < 1) {
+          ctx.fillStyle = rgba([255, 255, 255], 0.45 * (1 - rp));
+          ctx.beginPath();
+          ctx.arc(X(tx), Y(ty), (6 + rp * 40) * s, 0, Math.PI * 2);
+          ctx.save();
+          roundRect(X(bx), Y(by), bw * s, bh * s, 19 * s);
+          ctx.clip();
+          ctx.beginPath();
+          ctx.arc(X(tx), Y(ty), (6 + rp * 40) * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        // cursor
+        if (curA > 0.01) {
+          ctx.save();
+          ctx.globalAlpha = curA;
+          ctx.translate(X(cx), Y(cy));
+          const k = s * 1.1 * (1 - 0.12 * Math.sin(Math.PI * seg(s4, 0.45, 0.62)));
+          ctx.scale(k, k);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(0, 17);
+          ctx.lineTo(4.5, 13);
+          ctx.lineTo(8, 20);
+          ctx.lineTo(10.5, 19);
+          ctx.lineTo(7, 12);
+          ctx.lineTo(12.5, 12);
+          ctx.closePath();
+          ctx.fillStyle = rgba(INK, 1);
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+          ctx.restore();
+        }
+        // toast
+        const ta = easeOut(seg(s4, 0.62, 0.8));
+        if (ta > 0) {
+          ctx.save();
+          ctx.globalAlpha = ta;
+          const ty0 = PY + 12 - (1 - ta) * 14;
+          ctx.shadowColor = "rgba(26,29,34,0.18)";
+          ctx.shadowBlur = 14 * s;
+          ctx.shadowOffsetY = 4 * s;
+          roundRect(X(PX + 14), Y(ty0), (PW - 28) * s, 30 * s, 10 * s);
+          ctx.fillStyle = rgba(INK, 1);
+          ctx.fill();
+          ctx.shadowColor = "transparent";
+          ctx.beginPath();
+          ctx.arc(X(PX + 30), Y(ty0 + 15), 6 * s, 0, Math.PI * 2);
+          ctx.fillStyle = "#2f9e5b";
+          ctx.fill();
+          txt("✓", PX + 30, ty0 + 15.5, 7, 700, "#ffffff", "center");
+          txt("Lesson started", PX + 42, ty0 + 15, 9.5, 500, "#ffffff");
+          ctx.restore();
         }
       }
     };
@@ -877,14 +741,15 @@ export default function Background() {
     };
   }, []);
 
-  const caption = active >= 0 ? steps[active].regionLabel : "Scroll through my background";
+  const caption = stage >= 0 ? STAGES[stage].text : active >= 0 ? steps[active].regionLabel : "Scroll through my background";
 
   return (
     <section id="about" className="scroll-mt-16 border-t border-rule">
       <div className="mx-auto max-w-[1200px] px-5 pt-20 sm:px-8 sm:pt-28">
         <h2 className="text-[40px] leading-none font-semibold tracking-[-0.03em] text-graphite sm:text-[56px]">Background</h2>
         <p className="mt-4 max-w-[60ch] text-lg leading-[1.6] text-graphite-soft">
-          I came to design through cognitive science and teaching. Keep scrolling and watch one idea turn into the next.
+          I came to design through cognitive science and teaching. Here is that path, and what each step gives the
+          products I design.
         </p>
       </div>
 
@@ -892,9 +757,23 @@ export default function Background() {
         <div className="sticky top-16 z-10 -mx-5 border-b border-rule bg-white/90 px-5 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:top-24 lg:mx-0 lg:h-[calc(100vh-8rem)] lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
           <div className="flex h-[32vh] flex-col lg:h-full lg:justify-center">
             <canvas ref={canvasRef} aria-hidden className="h-full w-full font-sans lg:h-[80%]" />
-            <p className="mt-2 text-center text-[15px] text-graphite-soft lg:mt-6" aria-live="polite">
-              {caption}
-            </p>
+            <div className="mt-2 flex flex-col items-center gap-2.5 lg:mt-6">
+              <p className="text-center text-[15px] text-graphite-soft" aria-live="polite">
+                {caption}
+              </p>
+              <ol className={`flex gap-1.5 transition-opacity duration-500 ${stage >= 0 ? "opacity-100" : "opacity-0"}`} aria-hidden>
+                {STAGES.map((st, i) => (
+                  <li
+                    key={st.name}
+                    className={`rounded-full px-2.5 py-0.5 text-[12px] transition-colors duration-300 ${
+                      i === stage ? "bg-select text-white" : i < stage ? "bg-select/10 text-select" : "bg-canvas text-graphite-soft"
+                    }`}
+                  >
+                    {st.name}
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </div>
 
@@ -908,7 +787,7 @@ export default function Background() {
                   stepRefs.current[i] = el;
                 }}
                 className={`border-rule ${i ? "border-t" : ""} ${
-                  isLast ? "min-h-[110vh] py-12 lg:min-h-[120vh] lg:py-16" : "flex flex-col justify-center py-12 lg:min-h-[78vh] lg:py-16"
+                  isLast ? "min-h-[150vh] py-12 lg:min-h-[170vh] lg:py-16" : "flex flex-col justify-center py-12 lg:min-h-[64vh] lg:py-16"
                 } transition-opacity duration-500 ${active === i || (active === -1 && i === 0) ? "opacity-100" : "lg:opacity-40"}`}
               >
                 <div className={isLast ? "lg:sticky lg:top-[38vh]" : ""}>

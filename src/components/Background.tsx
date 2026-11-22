@@ -193,7 +193,6 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 
 // Each neuron flies on its own gentle arc rather than a straight line.
 const bend = nodes.map((_, i) => (Math.sin(i * 12.9898) * 43758.5453) % 1);
-const backOut = (t: number) => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2);
 const bump = (v: number, a: number, m: number, b: number) => (v < a || v > b ? 0 : v < m ? (v - a) / (m - a) : (b - v) / (b - m));
 
 /* ---------- helpers -------------------------------------------------- */
@@ -376,15 +375,11 @@ export default function Background() {
             let cy = CORE_Y + Math.sin(ang) * r * 0.8;
             // 2. burst: fly out past the target and settle into the grid
             if (burst > 0) {
-              const q = clamp(burst * 1.35 - Math.abs(bend[i]) * 0.35);
-              const e = backOut(q);
+              const q = clamp(burst * 1.6 - order[i] * 0.6);
+              const e = easeOut(q);
               const [gx, gy] = gridPos[i];
-              const push = Math.sin(Math.PI * clamp(q)) * 70;
-              const dx = gx - cx, dy = gy - cy, dl = Math.hypot(dx, dy) || 1;
-              const bx2 = cx + dx * e + (dx / dl) * push * 0.6 + (-dy / dl) * push * bend[i] * 0.5;
-              const by2 = cy + dy * e + (dy / dl) * push * 0.6 + (dx / dl) * push * bend[i] * 0.5;
-              cx = bx2;
-              cy = by2;
+              cx += (gx - cx) * e;
+              cy += (gy - cy) * e;
             }
             x = cx;
             y = cy;
@@ -397,17 +392,13 @@ export default function Background() {
       };
       const pos: [number, number][] = new Array(N);
       place(morph, pos);
-      // motion trails while particles are flying
-      const flying = s1 > 0.05 && s2 < 0.6;
-      const prev: [number, number][] = new Array(N);
-      if (flying) place(Math.max(0, morph - 0.018), prev);
 
-      /* --- the collapse: glow, shockwave, trails --- */
+      /* --- the collapse: a soft glow at the core --- */
       if (s1 > 0 && s1 < 1) {
         const glow = bump(s1, 0.25, 0.47, 0.7);
         if (glow > 0) {
           const cx = X(CORE_X), cy = Y(CORE_Y);
-          const R = (30 + glow * 90) * s;
+          const R = (20 + glow * 50) * s;
           const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
           g.addColorStop(0, `rgba(255,255,255,${0.95 * glow})`);
           g.addColorStop(0.25, rgba(COBALT, 0.55 * glow));
@@ -416,31 +407,6 @@ export default function Background() {
           ctx.beginPath();
           ctx.arc(cx, cy, R, 0, Math.PI * 2);
           ctx.fill();
-        }
-        const wave = seg(s1, 0.48, 0.85);
-        if (wave > 0 && wave < 1) {
-          ctx.strokeStyle = rgba(COBALT, 0.5 * (1 - wave));
-          ctx.lineWidth = 2 * (1 - wave) + 0.5;
-          ctx.beginPath();
-          ctx.ellipse(X(CORE_X), Y(CORE_Y), (20 + wave * 300) * s, (16 + wave * 240) * s, 0, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
-      if (flying) {
-        ctx.lineCap = "round";
-        for (let i = 0; i < N; i++) {
-          const dx = pos[i][0] - prev[i][0], dy = pos[i][1] - prev[i][1];
-          const sp = Math.hypot(dx, dy);
-          if (sp < 3) continue;
-          const g = ctx.createLinearGradient(prev[i][0] - dx * 0.8, prev[i][1] - dy * 0.8, pos[i][0], pos[i][1]);
-          g.addColorStop(0, rgba(COBALT, 0));
-          g.addColorStop(1, rgba(COBALT, Math.min(0.7, sp / 30)));
-          ctx.strokeStyle = g;
-          ctx.lineWidth = 2.2 * Math.max(0.8, s);
-          ctx.beginPath();
-          ctx.moveTo(prev[i][0] - dx * 0.8, prev[i][1] - dy * 0.8);
-          ctx.lineTo(pos[i][0], pos[i][1]);
-          ctx.stroke();
         }
       }
 
@@ -504,7 +470,7 @@ export default function Background() {
       }
 
       /* --- stage 1: layout grid columns --- */
-      const gridA = Math.min(ease(clamp(s1 * 1.6 - 0.3)), 1 - ease(s3));
+      const gridA = Math.min(ease(seg(s1, 0.85, 1)), 1 - ease(s3));
       if (gridA > 0.01) {
         ctx.save();
         ctx.globalAlpha = gridA;
@@ -517,7 +483,6 @@ export default function Background() {
         roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
         ctx.stroke();
         ctx.setLineDash([]);
-        if (s2 < 0.5) txt("4-column grid, 8pt rhythm", PX + PW + 14, PY + 30, 11, 500, rgba(COBALT, 0.9 * (1 - s2 * 2)));
         ctx.restore();
       }
 

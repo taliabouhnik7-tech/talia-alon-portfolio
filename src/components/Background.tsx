@@ -169,6 +169,28 @@ const wirePos: [number, number][] = new Array(N);
   const b = wirePts.map((_, i) => i).sort((i, j) => angle(wirePts[i]) - angle(wirePts[j]));
   a.forEach((idx, k) => (wirePos[idx] = wirePts[b[k]]));
 }
+// Pseudo-3D: give every neuron a depth inside an ellipsoid so the brain can
+// turn as you scroll, and a scattered start point it assembles from.
+const BCX = 300, BCY = 215;
+const rand = (i: number, k: number) => {
+  const v = Math.sin(i * k) * 43758.5453;
+  return (v - Math.floor(v)) * 2 - 1;
+};
+const depthZ = nodes.map((n, i) => {
+  const dx = (n.x - BCX) / 270, dy = (n.y - BCY) / 210;
+  return rand(i, 78.233) * Math.sqrt(Math.max(0.05, 1 - dx * dx - dy * dy)) * 120;
+});
+const dust = nodes.map((_, i) => {
+  const a = i * 2.39996;
+  const r = 230 + (rand(i, 3.17) + 1) * 80;
+  return [BCX + Math.cos(a) * r * 1.25, BCY + Math.sin(a) * r * 0.75] as [number, number];
+});
+const nodeDist = nodes.map((n) => {
+  const [cx, cy] = centroids[n.r];
+  return Math.hypot(n.x - cx, n.y - cy);
+});
+const smooth = (x: number) => x * x * (3 - 2 * x);
+
 // Each neuron flies on its own gentle arc rather than a straight line.
 const bend = nodes.map((_, i) => (Math.sin(i * 12.9898) * 43758.5453) % 1);
 
@@ -196,13 +218,17 @@ export default function Background() {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const font = getComputedStyle(canvas).fontFamily;
 
+    // Everything below is a function of scroll position, lightly smoothed, so
+    // scrolling back up plays the whole thing in reverse.
     const intensity = Object.fromEntries(REGIONS.map((r) => [r, 0])) as Record<Region, number>;
-    const litAt = Object.fromEntries(REGIONS.map((r) => [r, -1e9])) as Record<Region, number>;
+    const nodeK = new Float32Array(N);
+    const depth = new Float32Array(N);
     const pulses: { e: number; t: number; v: number }[] = [];
     let morph = 0;
+    let form = 0;
+    let turn = 0;
     let lastIdx = -2;
     let lastStage = -2;
-    let prevLit: Region[] = [];
     let frame = 0;
     let running = false;
     let prevT = performance.now();
@@ -223,39 +249,67 @@ export default function Background() {
       prevT = now;
       const vh = window.innerHeight;
 
+      const k = reduce ? 1 : 1 - Math.exp(-dt * 9);
+      const els = stepRefs.current;
+      const sec = canvas.closest("section")?.getBoundingClientRect();
+      const first = els[0]?.getBoundingClientRect();
+      const lastEl = els[steps.length - 1];
+      const lastR = lastEl?.getBoundingClientRect();
+      if (!sec || !first || !lastR) {
+        if (running) frame = requestAnimationFrame(tick);
+        return;
+      }
+
+      // 1. neurons assemble as the section scrolls in
+      form += (clamp((vh * 0.95 - sec.top) / (vh * 0.75)) - form) * k;
+      // 2. the brain turns slowly across the whole timeline
+      turn += (clamp((vh * 0.5 - first.top) / Math.max(1, lastR.top - first.top)) - turn) * k;
+      // 3. how centred each step is, 0..1
+      const focus = steps.map((_, i) => {
+        const r = els[i]!.getBoundingClientRect();
+        const c = i === steps.length - 1 ? r.top + vh * 0.3 : r.top + r.height / 2;
+        return smooth(clamp(1 - Math.abs(c - vh * 0.5) / (vh * 0.55)));
+      });
       let idx = -1;
-      stepRefs.current.forEach((el, i) => {
-        if (el && el.getBoundingClientRect().top < vh * 0.5) idx = i;
+      let best = 0.2;
+      focus.forEach((f, i) => {
+        if (f > best) {
+          best = f;
+          idx = i;
+        }
       });
       if (idx !== lastIdx) {
         lastIdx = idx;
         setActive(idx);
       }
-
-      const last = stepRefs.current[steps.length - 1];
-      let target = 0;
-      if (last) {
-        const r = last.getBoundingClientRect();
-        target = clamp((vh * 0.7 - r.top) / Math.max(1, r.height - vh * 0.5));
+      for (const r of REGIONS) {
+        let goal = 0;
+        steps.forEach((st, i) => {
+          if (st.regions.includes(r)) goal = Math.max(goal, focus[i]);
+        });
+        intensity[r] += (goal - intensity[r]) * k;
       }
-      morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 4.5));
+      // light spreads out from the centre of each region as a step scrolls in
+      for (let i = 0; i < N; i++) {
+        const f = intensity[nodes[i].r];
+        const goal = smooth(clamp((f * 300 - nodeDist[i]) / 70));
+        nodeK[i] += (goal - nodeK[i]) * k;
+      }
+
+      // 4. the final design-process morph
+      const target = clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
+      morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 7));
       const st = morph < 0.02 ? -1 : Math.min(3, Math.floor(morph * 4 + 0.15));
       if (st !== lastStage) {
         lastStage = st;
         setStage(st);
       }
 
-      const lit = idx >= 0 ? steps[idx].regions : [];
-      for (const r of lit) if (!prevLit.includes(r)) litAt[r] = now;
-      prevLit = lit;
-      for (const r of REGIONS) {
-        const goal = lit.includes(r) ? 1 : 0;
-        intensity[r] += (goal - intensity[r]) * (reduce ? 1 : 1 - Math.exp(-dt * 3.2));
-      }
-      if (!reduce && lit.length && pulses.length < 30 && Math.random() < 0.4) {
+      const anyLit = REGIONS.some((r) => intensity[r] > 0.3);
+      if (!reduce && anyLit && pulses.length < 30 && Math.random() < 0.4) {
         const e = Math.floor(Math.random() * edges.length);
         const [a, b] = edges[e];
-        if (lit.includes(nodes[a].r) || lit.includes(nodes[b].r)) pulses.push({ e, t: 0, v: 0.8 + Math.random() * 1.2 });
+        if (nodeK[a] > 0.4 || nodeK[b] > 0.4) pulses.push({ e, t: 0, v: 0.8 + Math.random() * 1.2 });
       }
 
       draw(now, dt);
@@ -293,11 +347,20 @@ export default function Background() {
       /* --- positions --- */
       const t = now / 1000;
       const pos: [number, number][] = new Array(N);
+      const th = (turn - 0.5) * 0.95 * (1 - ease(s1));
+      const cosT = Math.cos(th), sinT = Math.sin(th);
       for (let i = 0; i < N; i++) {
         const n = nodes[i];
-        const drift = reduce ? 0 : (1 - s1) * 1.4;
-        const bx = n.x + Math.sin(t * 0.7 + i * 1.7) * drift;
-        const by = n.y + Math.cos(t * 0.6 + i * 2.3) * drift;
+        const drift = reduce ? 0 : (1 - s1) * 1.2;
+        const rx = n.x - BCX;
+        // turn around the vertical axis
+        let bx = BCX + rx * cosT + depthZ[i] * sinT + Math.sin(t * 0.7 + i * 1.7) * drift;
+        let by = n.y + Math.cos(t * 0.6 + i * 2.3) * drift;
+        depth[i] = (depthZ[i] * cosT - rx * sinT) / 140;
+        // assemble from scattered dust
+        const ff = ease(clamp(form * 1.6 - (1 - order[i]) * 0.6));
+        bx = dust[i][0] + (bx - dust[i][0]) * ff;
+        by = dust[i][1] + (by - dust[i][1]) * ff;
         const a1 = ease(clamp(s1 * 1.5 - order[i] * 0.5));
         const [gx, gy] = gridPos[i];
         // quadratic arc
@@ -315,7 +378,8 @@ export default function Background() {
       /* --- brain: outline, connections, signals --- */
       if (brainA > 0.01) {
         ctx.save();
-        ctx.globalAlpha = brainA;
+        ctx.globalAlpha = brainA * ease(clamp(form * 1.4 - 0.4));
+        const OX = (x: number) => X(BCX + (x - BCX) * cosT);
         ctx.strokeStyle = rgba(INK, 0.2);
         ctx.lineWidth = 1.4;
         ctx.beginPath();
@@ -323,21 +387,23 @@ export default function Background() {
           const p0 = outline[i % outline.length];
           const p1 = outline[(i + 1) % outline.length];
           const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
-          if (i === 0) ctx.moveTo(X(mx), Y(my));
-          else ctx.quadraticCurveTo(X(p0[0]), Y(p0[1]), X(mx), Y(my));
+          if (i === 0) ctx.moveTo(OX(mx), Y(my));
+          else ctx.quadraticCurveTo(OX(p0[0]), Y(p0[1]), OX(mx), Y(my));
         }
         ctx.stroke();
         ctx.beginPath();
-        ctx.ellipse(X(452), Y(330), 72 * s, 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
-        ctx.moveTo(X(378), Y(318));
-        ctx.lineTo(X(384), Y(410));
-        ctx.moveTo(X(410), Y(312));
-        ctx.lineTo(X(420), Y(410));
+        ctx.ellipse(OX(452), Y(330), 72 * s * Math.abs(cosT), 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
+        ctx.moveTo(OX(378), Y(318));
+        ctx.lineTo(OX(384), Y(410));
+        ctx.moveTo(OX(410), Y(312));
+        ctx.lineTo(OX(420), Y(410));
         ctx.stroke();
+        ctx.globalAlpha = brainA * form * form;
 
         for (const [a, b] of edges) {
-          const k = Math.min(intensity[nodes[a].r], intensity[nodes[b].r]);
-          ctx.strokeStyle = rgba(mix(INK, COBALT, k), 0.1 + k * 0.42);
+          const k = Math.min(nodeK[a], nodeK[b]);
+          const dep = 0.75 + 0.25 * Math.max(-1, Math.min(1, (depth[a] + depth[b]) / 2));
+          ctx.strokeStyle = rgba(mix(INK, COBALT, k), (0.1 + k * 0.42) * dep);
           ctx.lineWidth = 1 + k * 0.5;
           ctx.beginPath();
           ctx.moveTo(pos[a][0], pos[a][1]);
@@ -538,19 +604,11 @@ export default function Background() {
       const dotA = 1 - ease(clamp(s3 * 1.6));
       if (dotA > 0.01) {
         for (let i = 0; i < N; i++) {
-          const n = nodes[i];
-          let k = intensity[n.r] * brainA;
-          if (!reduce && k > 0.05) {
-            const age = (now - litAt[n.r]) / 1000;
-            if (age < 2.5) {
-              const [cx, cy] = centroids[n.r];
-              const d = Math.hypot(n.x - cx, n.y - cy);
-              k += 0.9 * Math.exp(-((d - age * 160) ** 2) / (2 * 26 * 26)) * (1 - age / 2.5);
-            }
-          }
+          let k = nodeK[i] * brainA;
           k = Math.min(1.4, k);
           const [x, y] = pos[i];
-          const r = (2.3 + Math.min(1, k) * 1.5) * Math.max(0.8, s) * (1 - s1 * 0.25);
+          const dep = Math.max(-1, Math.min(1, depth[i])) * (1 - s1);
+          const r = (2.3 + Math.min(1, k) * 1.5) * Math.max(0.8, s) * (1 - s1 * 0.25) * (1 + dep * 0.22);
           if (k > 0.05) {
             ctx.fillStyle = rgba(COBALT, 0.11 * k * dotA);
             ctx.beginPath();
@@ -558,7 +616,7 @@ export default function Background() {
             ctx.fill();
           }
           const c = mix(INK, COBALT, Math.max(Math.min(1, k), s1 * 0.85));
-          ctx.fillStyle = rgba(c, (0.38 + Math.min(1, k) * 0.55 + s1 * 0.4) * dotA);
+          ctx.fillStyle = rgba(c, (0.38 + Math.min(1, k) * 0.55 + s1 * 0.4) * dotA * (0.72 + 0.28 * (dep + 1) / 2) * (0.35 + 0.65 * form));
           ctx.beginPath();
           ctx.arc(x, y, r, 0, Math.PI * 2);
           ctx.fill();
@@ -574,7 +632,8 @@ export default function Background() {
           const name = REGION_NAMES[r];
           const k = intensity[r] * brainA;
           if (!name || k < 0.08) continue;
-          const [cx, cy] = labelPos[r];
+          const [lx, cy] = labelPos[r];
+          const cx = BCX + (lx - BCX) * cosT;
           const ph = Math.max(20, 24 * s);
           const pw = ctx.measureText(name).width + ph * 0.9;
           ctx.globalAlpha = Math.min(1, k * 1.3);

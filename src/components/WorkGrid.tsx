@@ -20,7 +20,7 @@ export default function WorkGrid() {
     <section id="work" className="mx-auto w-full max-w-[1200px] scroll-mt-16 px-5 pb-20 sm:px-8 sm:pb-28">
       <div className="flex flex-col gap-5 border-t border-rule pt-8 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-[28px] font-semibold tracking-[-0.025em] text-graphite">
-          Work <span className="font-normal text-graphite-soft tabular-nums">{list.length}</span>
+          Work
         </h2>
 
         <div role="tablist" aria-label="Filter projects" className="inline-flex self-start rounded-full bg-canvas p-1 sm:self-auto">

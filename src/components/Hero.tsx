@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import HeroMark from "@/components/HeroMark";
 
 const container: Variants = {
@@ -18,8 +19,20 @@ const item: Variants = {
 };
 
 export default function Hero() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  // As the hero leaves, the copy drifts up and dissolves — handing off to
+  // the scroll-driven process section below.
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+  const textBlur = useTransform(scrollYProgress, [0.3, 0.9], ["blur(0px)", "blur(6px)"]);
+
   return (
     <section
+      ref={ref}
       id="top"
       className="bg-grain relative overflow-hidden"
       style={{
@@ -33,7 +46,10 @@ export default function Hero() {
         animate="show"
         className="relative z-10 mx-auto grid max-w-6xl gap-10 px-5 pt-14 pb-16 sm:px-8 sm:pt-20 sm:pb-20 lg:grid-cols-[1fr_360px] lg:items-center lg:gap-16 lg:pb-28"
       >
-        <div className="max-w-2xl">
+        <motion.div
+          className="max-w-2xl"
+          style={{ y: textY, opacity: textOpacity, filter: textBlur }}
+        >
           <motion.div variants={item} className="lg:hidden">
             <HeroMark className="mb-8 h-32 w-32 text-brand-glow" />
           </motion.div>
@@ -85,7 +101,7 @@ export default function Hero() {
             <span className="text-brand-glow">·</span>
             <span>Mobile-first</span>
           </motion.p>
-        </div>
+        </motion.div>
 
         <motion.div variants={item} className="hidden lg:block">
           <HeroMark className="h-80 w-80 text-brand-glow" />

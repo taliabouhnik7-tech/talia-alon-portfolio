@@ -46,6 +46,16 @@ export const projects: Project[] = [
     image: "/images/work/chef-coach-cover.png",
   },
   {
+    slug: "spark",
+    title: "SPARK",
+    role: "Solo",
+    category: "Mobile app, AI",
+    description:
+      "A short-video learning app: AI-generated lessons, cliffhanger endings and a community of curious people.",
+    image: "/images/work/spark-cover.webp",
+    imageFit: "cover",
+  },
+  {
     slug: "heichal-etzion",
     title: "Heichal Etzion",
     role: "Solo",
@@ -53,6 +63,15 @@ export const projects: Project[] = [
     description:
       "A donation page for a synagogue renovation. Two ways to give, Paybox or bank transfer, and nothing in the way.",
     image: "/images/work/heichal-etzion-cover.webp",
+    imageFit: "cover",
+  },
+  {
+    slug: "omaka",
+    title: "OMAKA",
+    role: "Solo",
+    category: "Brand identity",
+    description: "Logo, typography and a brand book for a sushi brand, built around two rings that form a fish.",
+    image: "/images/work/omaka-cover.webp",
     imageFit: "cover",
   },
   {

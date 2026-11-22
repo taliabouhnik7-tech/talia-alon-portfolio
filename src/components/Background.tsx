@@ -88,8 +88,7 @@ const REGION_NAMES: Partial<Record<Region, string>> = {
 };
 
 const STAGES = [
-  { name: "Grid", text: "Neurons settle into a layout grid" },
-  { name: "Wireframe", text: "The grid becomes a wireframe" },
+  { name: "Wireframe", text: "The network reshapes into a wireframe" },
   { name: "Interface", text: "The wireframe becomes an interface" },
   { name: "Interaction", text: "And the interface responds" },
 ];
@@ -162,13 +161,6 @@ function perimeterPoints(count: number) {
   return out;
 }
 const wirePts = perimeterPoints(N);
-const angle = ([x, y]: [number, number]) => Math.atan2(y - (PY + PH / 2), x - (PX + PW / 2));
-const wirePos: [number, number][] = new Array(N);
-{
-  const a = nodes.map((_, i) => i).sort((i, j) => angle(gridPos[i]) - angle(gridPos[j]));
-  const b = wirePts.map((_, i) => i).sort((i, j) => angle(wirePts[i]) - angle(wirePts[j]));
-  a.forEach((idx, k) => (wirePos[idx] = wirePts[b[k]]));
-}
 // Pseudo-3D: give every neuron a depth inside an ellipsoid so the brain can
 // turn as you scroll, and a scattered start point it assembles from.
 const BCX = 300, BCY = 215;
@@ -191,9 +183,70 @@ const nodeDist = nodes.map((n) => {
 });
 const smooth = (x: number) => x * x * (3 - 2 * x);
 
-// Each neuron flies on its own gentle arc rather than a straight line.
-const bend = nodes.map((_, i) => (Math.sin(i * 12.9898) * 43758.5453) % 1);
-const bump = (v: number, a: number, m: number, b: number) => (v < a || v > b ? 0 : v < m ? (v - a) / (m - a) : (b - v) / (b - m));
+/* The brain-to-phone morph: every neuron is matched to a point on the app's
+   wireframe by angle, so the network keeps its shape while it reshapes, and
+   the brain's outline is resampled so it can bend into the phone's frame. */
+const PCX = PX + PW / 2, PCY = PY + PH / 2;
+const morphTarget: [number, number][] = new Array(N);
+const morphOrder: number[] = new Array(N);
+{
+  const a = nodes.map((_, i) => i).sort((i, j) => Math.atan2(nodes[i].y - BCY, nodes[i].x - BCX) - Math.atan2(nodes[j].y - BCY, nodes[j].x - BCX));
+  const b = wirePts.map((_, i) => i).sort((i, j) => Math.atan2(wirePts[i][1] - PCY, wirePts[i][0] - PCX) - Math.atan2(wirePts[j][1] - PCY, wirePts[j][0] - PCX));
+  a.forEach((idx, k) => {
+    morphTarget[idx] = wirePts[b[k]];
+    morphOrder[idx] = Math.hypot(nodes[idx].x - BCX, nodes[idx].y - BCY) / 300;
+  });
+}
+const RING = 180;
+function resample(poly: [number, number][], n: number): [number, number][] {
+  const segs = poly.map((p, i) => [p, poly[(i + 1) % poly.length]] as const);
+  const lens = segs.map(([a, b]) => Math.hypot(b[0] - a[0], b[1] - a[1]));
+  const total = lens.reduce((x, y) => x + y, 0);
+  const out: [number, number][] = [];
+  for (let k = 0; k < n; k++) {
+    let t = (k / n) * total;
+    for (let i = 0; i < segs.length; i++) {
+      if (t <= lens[i]) {
+        const [a, b] = segs[i];
+        const f = t / lens[i];
+        out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+        break;
+      }
+      t -= lens[i];
+    }
+  }
+  return out;
+}
+function roundedRectPoly(x: number, y: number, w: number, h: number, r: number) {
+  const pts: [number, number][] = [];
+  const arc = (cx: number, cy: number, a0: number) => {
+    for (let k = 0; k <= 8; k++) {
+      const a = a0 + (k / 8) * (Math.PI / 2);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    }
+  };
+  arc(x + w - r, y + r, -Math.PI / 2);
+  arc(x + w - r, y + h - r, 0);
+  arc(x + r, y + h - r, Math.PI / 2);
+  arc(x + r, y + r, Math.PI);
+  return pts;
+}
+const brainRing = resample(outline as [number, number][], RING);
+const phoneRing = (() => {
+  const ring = resample(roundedRectPoly(PX, PY, PW, PH, PR), RING);
+  // start both rings at the same angle so the outline bends instead of twisting
+  const a0 = Math.atan2(brainRing[0][1] - BCY, brainRing[0][0] - BCX);
+  let best = 0, bestD = 9;
+  ring.forEach(([x, y], i) => {
+    const d = Math.abs(Math.atan2(y - PCY, x - PCX) - a0);
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
+  });
+  return [...ring.slice(best), ...ring.slice(0, best)];
+})();
+
 
 /* ---------- helpers -------------------------------------------------- */
 
@@ -300,7 +353,7 @@ export default function Background() {
       // 4. the final design-process morph
       const target = clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
       morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 7));
-      const st = morph < 0.02 ? -1 : Math.min(3, Math.floor(morph * 4 + 0.15));
+      const st = morph < 0.02 ? -1 : morph < 0.42 ? 0 : morph < 0.74 ? 1 : 2;
       if (st !== lastStage) {
         lastStage = st;
         setStage(st);
@@ -339,21 +392,18 @@ export default function Background() {
       };
 
       // Stage progress
-      const s1 = seg(morph, 0, 0.34); // brain collapses into a core, then bursts into a grid
-      const s2 = seg(morph, 0.24, 0.52); // grid -> wireframe
-      const s3 = seg(morph, 0.5, 0.76); // wireframe -> interface
-      const s4 = seg(morph, 0.76, 1); // interaction
-      const brainA = 1 - ease(clamp(s1 * 2.4));
+      const s1 = seg(morph, 0, 0.42); // the network reshapes into the wireframe
+      const s3 = seg(morph, 0.4, 0.72); // wireframe -> interface
+      const s4 = seg(morph, 0.74, 1); // interaction
+      const brainA = 1 - ease(seg(s1, 0.2, 0.65));
+      const easeIO = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
       /* --- positions --- */
       const t = now / 1000;
       const th = (turn - 0.5) * 0.95 * (1 - ease(s1));
       const cosT = Math.cos(th), sinT = Math.sin(th);
-      const CORE_X = BCX + 5, CORE_Y = BCY;
       const place = (mv: number, out: [number, number][]) => {
-        const S1 = seg(mv, 0, 0.34), S2 = seg(mv, 0.24, 0.52);
-        const implode = ease(seg(S1, 0, 0.42));
-        const burst = seg(S1, 0.5, 1);
+        const S1 = seg(mv, 0, 0.42);
         for (let i = 0; i < N; i++) {
           const n = nodes[i];
           const drift = reduce ? 0 : (1 - S1) * 1.2;
@@ -365,74 +415,55 @@ export default function Background() {
           x = dust[i][0] + (x - dust[i][0]) * ff;
           y = dust[i][1] + (y - dust[i][1]) * ff;
           if (S1 > 0) {
-            // 1. collapse: spiral into a bright core
-            const ang0 = Math.atan2(y - CORE_Y, x - CORE_X);
-            const r0 = Math.hypot(x - CORE_X, y - CORE_Y);
-            const rc = 6 + Math.abs(bend[i]) * 12;
-            const ang = ang0 + implode * 2.6;
-            const r = r0 + (rc - r0) * implode;
-            let cx = CORE_X + Math.cos(ang) * r;
-            let cy = CORE_Y + Math.sin(ang) * r * 0.8;
-            // 2. burst: fly out past the target and settle into the grid
-            if (burst > 0) {
-              const q = clamp(burst * 1.6 - order[i] * 0.6);
-              const e = easeOut(q);
-              const [gx, gy] = gridPos[i];
-              cx += (gx - cx) * e;
-              cy += (gy - cy) * e;
-            }
-            x = cx;
-            y = cy;
+            const e = easeIO(clamp(S1 * 1.3 - morphOrder[i] * 0.3));
+            x += (morphTarget[i][0] - x) * e;
+            y += (morphTarget[i][1] - y) * e;
           }
-          const a2 = ease(clamp(S2 * 1.5 - order[i] * 0.5));
-          x += (wirePos[i][0] - x) * a2;
-          y += (wirePos[i][1] - y) * a2;
           out[i] = [X(x), Y(y)];
         }
       };
       const pos: [number, number][] = new Array(N);
       place(morph, pos);
 
-      /* --- the collapse: a soft glow at the core --- */
-      if (s1 > 0 && s1 < 1) {
-        const glow = bump(s1, 0.25, 0.47, 0.7);
-        if (glow > 0) {
-          const cx = X(CORE_X), cy = Y(CORE_Y);
-          const R = (20 + glow * 50) * s;
-          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-          g.addColorStop(0, `rgba(255,255,255,${0.95 * glow})`);
-          g.addColorStop(0.25, rgba(COBALT, 0.55 * glow));
-          g.addColorStop(1, rgba(COBALT, 0));
-          ctx.fillStyle = g;
-          ctx.beginPath();
-          ctx.arc(cx, cy, R, 0, Math.PI * 2);
-          ctx.fill();
+      /* --- the outline bends from brain to phone --- */
+      {
+        const e = easeIO(clamp(s1 * 1.15));
+        const th2 = th;
+        ctx.save();
+        ctx.globalAlpha = ease(clamp(form * 1.4 - 0.4));
+        ctx.strokeStyle = rgba(INK, 0.2 + 0.7 * e);
+        ctx.lineWidth = 1.4 + 0.6 * e;
+        ctx.beginPath();
+        for (let k = 0; k <= RING; k++) {
+          const [bx0, by] = brainRing[k % RING];
+          const bx = BCX + (bx0 - BCX) * Math.cos(th2);
+          const [px, py] = phoneRing[k % RING];
+          const x = X(bx + (px - bx) * e), y = Y(by + (py - by) * e);
+          if (k === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
         }
+        ctx.stroke();
+        // cerebellum and brain stem fade as the outline straightens
+        const rest = 1 - ease(clamp(s1 * 2.5));
+        if (rest > 0.01) {
+          const OX = (x: number) => X(BCX + (x - BCX) * cosT);
+          ctx.globalAlpha *= rest;
+          ctx.strokeStyle = rgba(INK, 0.2);
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.ellipse(OX(452), Y(330), 72 * s * Math.abs(cosT), 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
+          ctx.moveTo(OX(378), Y(318));
+          ctx.lineTo(OX(384), Y(410));
+          ctx.moveTo(OX(410), Y(312));
+          ctx.lineTo(OX(420), Y(410));
+          ctx.stroke();
+        }
+        ctx.restore();
       }
 
       /* --- brain: outline, connections, signals --- */
       if (brainA > 0.01) {
         ctx.save();
-        ctx.globalAlpha = brainA * ease(clamp(form * 1.4 - 0.4));
-        const OX = (x: number) => X(BCX + (x - BCX) * cosT);
-        ctx.strokeStyle = rgba(INK, 0.2);
-        ctx.lineWidth = 1.4;
-        ctx.beginPath();
-        for (let i = 0; i <= outline.length; i++) {
-          const p0 = outline[i % outline.length];
-          const p1 = outline[(i + 1) % outline.length];
-          const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2;
-          if (i === 0) ctx.moveTo(OX(mx), Y(my));
-          else ctx.quadraticCurveTo(OX(p0[0]), Y(p0[1]), OX(mx), Y(my));
-        }
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.ellipse(OX(452), Y(330), 72 * s * Math.abs(cosT), 40 * s, 0, 0.15 * Math.PI, 1.05 * Math.PI);
-        ctx.moveTo(OX(378), Y(318));
-        ctx.lineTo(OX(384), Y(410));
-        ctx.moveTo(OX(410), Y(312));
-        ctx.lineTo(OX(420), Y(410));
-        ctx.stroke();
         ctx.globalAlpha = brainA * form * form;
 
         for (const [a, b] of edges) {
@@ -469,36 +500,8 @@ export default function Background() {
         ctx.restore();
       }
 
-      /* --- stage 1: layout grid columns --- */
-      const gridA = Math.min(ease(seg(s1, 0.85, 1)), 1 - ease(s3));
-      if (gridA > 0.01) {
-        ctx.save();
-        ctx.globalAlpha = gridA;
-        const m = 14, g = 10, cw = (PW - m * 2 - g * 3) / 4;
-        ctx.fillStyle = rgba(COBALT, 0.07);
-        for (let c = 0; c < 4; c++) ctx.fillRect(X(PX + m + c * (cw + g)), Y(PY + 10), cw * s, (PH - 20) * s);
-        ctx.setLineDash([3, 4]);
-        ctx.strokeStyle = rgba(COBALT, 0.35);
-        ctx.lineWidth = 1;
-        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-
       /* --- stage 2: wireframe --- */
-      const frameDraw = ease(clamp(s2 * 1.6));
-      if (frameDraw > 0.001) {
-        const per = 2 * (PW + PH) * s;
-        ctx.save();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = rgba(INK, 0.9);
-        ctx.setLineDash([per * frameDraw, per]);
-        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
-        ctx.stroke();
-        ctx.restore();
-      }
-      const wireA = Math.min(ease(clamp(s2 * 1.5 - 0.35)), 1 - ease(clamp(s3 * 1.4)));
+      const wireA = Math.min(ease(seg(s1, 0.55, 1)), 1 - ease(clamp(s3 * 1.4)));
       if (wireA > 0.01) {
         ctx.save();
         ctx.globalAlpha = wireA;

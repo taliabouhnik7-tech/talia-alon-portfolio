@@ -4,7 +4,6 @@ import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
 import FactGrid from "@/components/case-study/FactGrid";
-import BehanceLink from "@/components/case-study/BehanceLink";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
@@ -43,12 +42,40 @@ export default function OmakaPage() {
                 { label: "Logo", description: "Two rings that overlap to form a fish, simple enough to work as an icon on its own." },
                 { label: "Typography", description: "Comfortaa for the logo and across the brand, rounded to echo the circles in the mark." },
                 { label: "Colour", description: "Black, white and a single strong red, so the name stands out wherever it sits." },
-                { label: "Usage", description: "Rules for applying the mark and type, so the brand looks the same every time." },
+                { label: "Applications", description: "Business cards, signage, posters, a billboard, social posts and stories, and branded chopsticks." },
               ]}
             />
           </section>
 
-          <BehanceLink href="https://www.behance.net/gallery/246033875/OMAKA-Brand-Book-2026" />
+          <section>
+            <Kicker>The brand in use</Kicker>
+            <div className="grid gap-4">
+              {[
+                ["logo-versions", "The logo in colour and in white"],
+                ["cards", "Business cards on a dark wave pattern"],
+                ["signage", "Mall signage: one bite, endless joy"],
+                ["poster", "Street poster for new club members"],
+                ["billboard", "Billboard: Roll into Love"],
+                ["post", "Instagram post"],
+                ["story", "Instagram story"],
+                ["chopsticks", "Branded chopsticks"],
+              ].map(([f, alt]) => (
+                <figure key={f} className="overflow-hidden rounded-[12px] bg-black ring-1 ring-rule">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/work/omaka/${f}.webp`} alt={alt} loading="lazy" className="w-full" />
+                  <figcaption className="bg-white px-4 py-2.5 text-[14px] text-graphite-soft">{alt}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+          <a
+            href="https://www.behance.net/gallery/246033875/OMAKA-Brand-Book-2026"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[15px] font-medium text-select hover:underline"
+          >
+            Also on Behance
+          </a>
         </div>
       </main>
       <ContactFooter />

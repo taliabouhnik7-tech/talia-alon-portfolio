@@ -193,6 +193,8 @@ const smooth = (x: number) => x * x * (3 - 2 * x);
 
 // Each neuron flies on its own gentle arc rather than a straight line.
 const bend = nodes.map((_, i) => (Math.sin(i * 12.9898) * 43758.5453) % 1);
+const backOut = (t: number) => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2);
+const bump = (v: number, a: number, m: number, b: number) => (v < a || v > b ? 0 : v < m ? (v - a) / (m - a) : (b - v) / (b - m));
 
 /* ---------- helpers -------------------------------------------------- */
 
@@ -338,41 +340,108 @@ export default function Background() {
       };
 
       // Stage progress
-      const s1 = seg(morph, 0, 0.3); // brain -> grid
+      const s1 = seg(morph, 0, 0.34); // brain collapses into a core, then bursts into a grid
       const s2 = seg(morph, 0.24, 0.52); // grid -> wireframe
       const s3 = seg(morph, 0.5, 0.76); // wireframe -> interface
       const s4 = seg(morph, 0.76, 1); // interaction
-      const brainA = 1 - ease(clamp(s1 * 1.8));
+      const brainA = 1 - ease(clamp(s1 * 2.4));
 
       /* --- positions --- */
       const t = now / 1000;
-      const pos: [number, number][] = new Array(N);
       const th = (turn - 0.5) * 0.95 * (1 - ease(s1));
       const cosT = Math.cos(th), sinT = Math.sin(th);
-      for (let i = 0; i < N; i++) {
-        const n = nodes[i];
-        const drift = reduce ? 0 : (1 - s1) * 1.2;
-        const rx = n.x - BCX;
-        // turn around the vertical axis
-        let bx = BCX + rx * cosT + depthZ[i] * sinT + Math.sin(t * 0.7 + i * 1.7) * drift;
-        let by = n.y + Math.cos(t * 0.6 + i * 2.3) * drift;
-        depth[i] = (depthZ[i] * cosT - rx * sinT) / 140;
-        // assemble from scattered dust
-        const ff = ease(clamp(form * 1.6 - (1 - order[i]) * 0.6));
-        bx = dust[i][0] + (bx - dust[i][0]) * ff;
-        by = dust[i][1] + (by - dust[i][1]) * ff;
-        const a1 = ease(clamp(s1 * 1.5 - order[i] * 0.5));
-        const [gx, gy] = gridPos[i];
-        // quadratic arc
-        const mx = (bx + gx) / 2 + (gy - by) * bend[i] * 0.35;
-        const my = (by + gy) / 2 + (bx - gx) * bend[i] * 0.35;
-        const u = 1 - a1;
-        let x = u * u * bx + 2 * u * a1 * mx + a1 * a1 * gx;
-        let y = u * u * by + 2 * u * a1 * my + a1 * a1 * gy;
-        const a2 = ease(clamp(s2 * 1.5 - order[i] * 0.5));
-        x += (wirePos[i][0] - x) * a2;
-        y += (wirePos[i][1] - y) * a2;
-        pos[i] = [X(x), Y(y)];
+      const CORE_X = BCX + 5, CORE_Y = BCY;
+      const place = (mv: number, out: [number, number][]) => {
+        const S1 = seg(mv, 0, 0.34), S2 = seg(mv, 0.24, 0.52);
+        const implode = ease(seg(S1, 0, 0.42));
+        const burst = seg(S1, 0.5, 1);
+        for (let i = 0; i < N; i++) {
+          const n = nodes[i];
+          const drift = reduce ? 0 : (1 - S1) * 1.2;
+          const rx = n.x - BCX;
+          let x = BCX + rx * cosT + depthZ[i] * sinT + Math.sin(t * 0.7 + i * 1.7) * drift;
+          let y = n.y + Math.cos(t * 0.6 + i * 2.3) * drift;
+          if (out === pos) depth[i] = (depthZ[i] * cosT - rx * sinT) / 140;
+          const ff = ease(clamp(form * 1.6 - (1 - order[i]) * 0.6));
+          x = dust[i][0] + (x - dust[i][0]) * ff;
+          y = dust[i][1] + (y - dust[i][1]) * ff;
+          if (S1 > 0) {
+            // 1. collapse: spiral into a bright core
+            const ang0 = Math.atan2(y - CORE_Y, x - CORE_X);
+            const r0 = Math.hypot(x - CORE_X, y - CORE_Y);
+            const rc = 6 + Math.abs(bend[i]) * 12;
+            const ang = ang0 + implode * 2.6;
+            const r = r0 + (rc - r0) * implode;
+            let cx = CORE_X + Math.cos(ang) * r;
+            let cy = CORE_Y + Math.sin(ang) * r * 0.8;
+            // 2. burst: fly out past the target and settle into the grid
+            if (burst > 0) {
+              const q = clamp(burst * 1.35 - Math.abs(bend[i]) * 0.35);
+              const e = backOut(q);
+              const [gx, gy] = gridPos[i];
+              const push = Math.sin(Math.PI * clamp(q)) * 70;
+              const dx = gx - cx, dy = gy - cy, dl = Math.hypot(dx, dy) || 1;
+              const bx2 = cx + dx * e + (dx / dl) * push * 0.6 + (-dy / dl) * push * bend[i] * 0.5;
+              const by2 = cy + dy * e + (dy / dl) * push * 0.6 + (dx / dl) * push * bend[i] * 0.5;
+              cx = bx2;
+              cy = by2;
+            }
+            x = cx;
+            y = cy;
+          }
+          const a2 = ease(clamp(S2 * 1.5 - order[i] * 0.5));
+          x += (wirePos[i][0] - x) * a2;
+          y += (wirePos[i][1] - y) * a2;
+          out[i] = [X(x), Y(y)];
+        }
+      };
+      const pos: [number, number][] = new Array(N);
+      place(morph, pos);
+      // motion trails while particles are flying
+      const flying = s1 > 0.05 && s2 < 0.6;
+      const prev: [number, number][] = new Array(N);
+      if (flying) place(Math.max(0, morph - 0.018), prev);
+
+      /* --- the collapse: glow, shockwave, trails --- */
+      if (s1 > 0 && s1 < 1) {
+        const glow = bump(s1, 0.25, 0.47, 0.7);
+        if (glow > 0) {
+          const cx = X(CORE_X), cy = Y(CORE_Y);
+          const R = (30 + glow * 90) * s;
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+          g.addColorStop(0, `rgba(255,255,255,${0.95 * glow})`);
+          g.addColorStop(0.25, rgba(COBALT, 0.55 * glow));
+          g.addColorStop(1, rgba(COBALT, 0));
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(cx, cy, R, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const wave = seg(s1, 0.48, 0.85);
+        if (wave > 0 && wave < 1) {
+          ctx.strokeStyle = rgba(COBALT, 0.5 * (1 - wave));
+          ctx.lineWidth = 2 * (1 - wave) + 0.5;
+          ctx.beginPath();
+          ctx.ellipse(X(CORE_X), Y(CORE_Y), (20 + wave * 300) * s, (16 + wave * 240) * s, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      if (flying) {
+        ctx.lineCap = "round";
+        for (let i = 0; i < N; i++) {
+          const dx = pos[i][0] - prev[i][0], dy = pos[i][1] - prev[i][1];
+          const sp = Math.hypot(dx, dy);
+          if (sp < 3) continue;
+          const g = ctx.createLinearGradient(prev[i][0] - dx * 0.8, prev[i][1] - dy * 0.8, pos[i][0], pos[i][1]);
+          g.addColorStop(0, rgba(COBALT, 0));
+          g.addColorStop(1, rgba(COBALT, Math.min(0.7, sp / 30)));
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 2.2 * Math.max(0.8, s);
+          ctx.beginPath();
+          ctx.moveTo(prev[i][0] - dx * 0.8, prev[i][1] - dy * 0.8);
+          ctx.lineTo(pos[i][0], pos[i][1]);
+          ctx.stroke();
+        }
       }
 
       /* --- brain: outline, connections, signals --- */

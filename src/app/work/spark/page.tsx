@@ -4,7 +4,7 @@ import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
 import FactGrid from "@/components/case-study/FactGrid";
-import BehanceLink from "@/components/case-study/BehanceLink";
+import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
@@ -50,7 +50,10 @@ export default function SparkPage() {
             />
           </section>
 
-          <BehanceLink href="https://www.behance.net/gallery/251148039/SPARK-AI-Powered-Micro-Learning-Mobile-App" />
+          <section>
+            <Kicker>Try the prototype</Kicker>
+            <FigmaEmbed fileKey="Q9MFFJCJAWS7Cco8mSn6l0" fileName="Untitled" nodeId="23:885" title="SPARK clickable prototype" />
+          </section>
         </div>
       </main>
       <ContactFooter />

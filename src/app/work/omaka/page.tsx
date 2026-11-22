@@ -11,9 +11,8 @@ export const metadata: Metadata = {
   description: "Brand identity and brand book for Omaka, a sushi brand: logo, typography and colour rules.",
 };
 
-// The original full-resolution pages, served from Talia's Behance project.
-const SRC = "https://mir-s3-cdn-cf.behance.net/project_modules/source/";
-const SLIDES = ["e6c5c0246033875.69babb6a90488.png", "a4b88b246033875.69babb6a942b3.png", "ad968f246033875.69babb6a90a15.png", "9fe3f4246033875.69babb6a9144c.png", "3ee516246033875.69babb6a90f01.png", "0e503d246033875.69babb6a93e8e.png", "5c29f3246033875.69babb6a92d78.png", "feb19d246033875.69babb6a93897.png", "1ff862246033875.69babb6a93259.png", "08fccf246033875.69babb6a91e8b.png", "7cf3f8246033875.69babb6a92868.png", "f5ef25246033875.69babb6a92387.png", "33b59b246033875.69babb6a9198a.png"];
+// Full-resolution pages (1400 x 788), captured losslessly from the Behance originals.
+const slide = (k: number) => `/images/work/omaka/slide-${String(k).padStart(2, "0")}.webp`;
 
 export default function OmakaPage() {
   return (
@@ -25,7 +24,7 @@ export default function OmakaPage() {
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${SRC}${SLIDES[1]}`}
+            src={slide(2)}
             alt="The Omaka logo: two white rings forming a fish, above the name in red"
             width={1400}
             height={788}
@@ -76,7 +75,7 @@ export default function OmakaPage() {
                 "Billboard: Roll into Love",
                 "Branded chopsticks",
                 "Thank you",
-              ].map((alt, k) => ({ src: `${SRC}${SLIDES[k]}`, alt }))}
+              ].map((alt, k) => ({ src: slide(k + 1), alt }))}
             />
           </section>
         </div>

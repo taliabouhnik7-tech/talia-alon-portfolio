@@ -1,7 +1,7 @@
 export default function Hero() {
   return (
     <section id="top" className="mx-auto w-full max-w-[1200px] px-5 pt-14 pb-12 sm:px-8 sm:pt-20 sm:pb-16">
-      <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-8">
         <div>
           <p className="flex items-center gap-2.5 text-[15px] text-graphite-soft">
             <span className="h-2 w-2 rounded-full bg-[#2f9e5b]" />
@@ -15,10 +15,10 @@ export default function Hero() {
           </p>
         </div>
 
-        <div className="max-w-[42ch] lg:pb-3">
-          <p className="text-[17px] leading-[1.6] text-graphite-soft">
-            Cognitive science graduate and former math teacher. I research how people think, design
-            for it, and when a project needs it, build the product myself.
+        <div className="max-w-[56ch]">
+          <p className="text-[18px] leading-[1.6] text-graphite-soft">
+            Cognitive science graduate and former math tutor. I research how people think, design
+            for it, and when a project needs it, take it all the way to a live product.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a

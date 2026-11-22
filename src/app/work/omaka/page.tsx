@@ -41,7 +41,7 @@ export default function OmakaPage() {
             <FactGrid
               facts={[
                 { label: "Logo", description: "Two rings that overlap to form a fish, simple enough to work as an icon on its own." },
-                { label: "Typography", description: "Comfortaa for the logo and across the brand, rounded to echo the circles in the mark." },
+                { label: "Typography", description: "Comfortaa, a rounded typeface, for the logo and across the brand." },
                 { label: "Colour", description: "Black, white and a single strong red, so the name stands out wherever it sits." },
                 { label: "Applications", description: "Business cards, signage, posters, a billboard, social posts and stories, and branded chopsticks." },
               ]}

@@ -45,7 +45,7 @@ export default function SparkPage() {
                 { label: "Onboarding", description: "One promise, “Learn like you scroll”, and a single clear action to start." },
                 { label: "Discover", description: "Search, trending topics and image-led cards that ask a question worth tapping on." },
                 { label: "Feed", description: "A full-screen vertical video feed with familiar actions: like, comment, save, share." },
-                { label: "Profile", description: "Interests that shape what the AI creates next, from coding to languages." },
+                { label: "Profile", description: "A personal profile with your interests, from coding to languages." },
               ]}
             />
           </section>

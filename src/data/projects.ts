@@ -15,7 +15,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Live product",
     description:
-      "My own ordering site and admin, designed in Figma and built by me. Live, with real orders.",
+      "My own ordering site and admin. I designed it in Figma and took it live. Real customers order from it.",
     image: "/images/work/bakery-cover.webp",
   },
   {

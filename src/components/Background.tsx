@@ -39,8 +39,8 @@ const steps: Step[] = [
   {
     where: "STEM instruction and private tutoring",
     title: "Teaching math one on one",
-    body: "Years of sessions with students who were stuck. The question they asked was rarely the real problem.",
-    design: "This is how I run interviews and usability tests: listen longer, find the real question, then design.",
+    body: "Sessions with students who were stuck. The question they asked was rarely the real problem.",
+    design: "I bring the same habit to user research: listen longer, find the real question, then design.",
     regions: ["temporal", "frontal"],
     regionLabel: "Language and planning",
   },
@@ -55,18 +55,26 @@ const steps: Step[] = [
   {
     where: "Udemy",
     title: "Advanced Figma",
-    body: "Components, variants, auto layout, variables and interactive prototypes.",
-    design: "Files a developer can build from, and design systems that hold up past the first screen.",
+    body: "A certificate course in advanced Figma: building reusable components, responsive layouts and interactive prototypes.",
+    design: "Organised files a developer can build from, not just screens that look right.",
     regions: ["cerebellum", "parietal"],
     regionLabel: "Skill built through practice",
   },
   {
     where: "Talia Alon Bakery",
-    title: "Designed, built and launched my own product",
+    title: "Designed and launched my own product",
     body: "An ordering site and admin system for my home bakery. It's live, and real customers order from it.",
     design: "I know what happens after handoff, because I've been on both sides of it.",
     regions: ["frontal", "parietal", "temporal", "occipital", "cerebellum", "stem"],
     regionLabel: "All of it, working together",
+  },
+  {
+    where: "Ariel University",
+    title: "Marketing communications coordinator",
+    body: "My current role, since September 2026: coordinating the university's marketing communications.",
+    design: "Daily practice in writing for a real audience and working with many people across an organisation.",
+    regions: ["temporal", "frontal"],
+    regionLabel: "Language and planning",
   },
   {
     where: "Now",
@@ -81,7 +89,7 @@ const steps: Step[] = [
 const REGIONS: Region[] = ["frontal", "parietal", "temporal", "occipital", "cerebellum", "stem"];
 const REGION_NAMES: Partial<Record<Region, string>> = {
   frontal: "Decisions",
-  parietal: "Attention",
+  parietal: "Spatial attention",
   temporal: "Language, memory",
   occipital: "Vision",
   cerebellum: "Skill",
@@ -400,7 +408,8 @@ export default function Background() {
 
       /* --- positions --- */
       const t = now / 1000;
-      const th = (turn - 0.5) * 0.95 * (1 - ease(s1));
+      // A fixed side view: the lobes stay where they really are.
+      const th = 0 * turn;
       const cosT = Math.cos(th), sinT = Math.sin(th);
       const place = (mv: number, out: [number, number][]) => {
         const S1 = seg(mv, 0, 0.42);
@@ -797,6 +806,9 @@ export default function Background() {
             <div className="mt-2 flex flex-col items-center gap-2.5 lg:mt-6">
               <p className="text-center text-[15px] text-graphite-soft" aria-live="polite">
                 {caption}
+              </p>
+              <p className="hidden text-center text-[12px] text-graphite-soft/70 lg:block">
+                A simplified map: each lobe leads certain functions, but real thinking uses many regions together.
               </p>
               <ol className={`flex gap-1.5 transition-opacity duration-500 ${stage >= 0 ? "opacity-100" : "opacity-0"}`} aria-hidden>
                 {STAGES.map((st, i) => (

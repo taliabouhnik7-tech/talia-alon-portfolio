@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${grotesk.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-canvas font-sans text-graphite">
+      <body className="flex min-h-full flex-col bg-frame font-sans text-graphite">
         <SmoothScroll />
         {children}
       </body>

@@ -2,20 +2,19 @@
 
 /*
  * Design tokens.
- * The site borrows its logic from a design file: a neutral grey canvas,
- * white frames sitting on it, graphite ink, and one cobalt "selection"
- * colour used only for what is active, focused or chosen.
+ * Clean white page, cool light-grey surfaces, graphite ink, and one cobalt
+ * "selection" colour used only for what is active, focused or chosen.
  */
 :root {
-  --color-canvas: #e7e7e4;
+  --color-canvas: #f2f3f5;
   --color-frame: #ffffff;
-  --color-graphite: #23262b;
-  --color-graphite-soft: #5f646c;
-  --color-rule: #cdcdc9;
+  --color-graphite: #1a1d22;
+  --color-graphite-soft: #5d626b;
+  --color-rule: #e2e4e8;
   --color-select: #3552f2;
 
   /* Legacy names used across case-study pages, mapped onto the new system. */
-  --color-paper: var(--color-canvas);
+  --color-paper: var(--color-frame);
   --color-ink: var(--color-graphite);
   --color-ink-secondary: var(--color-graphite-soft);
   --color-accent: var(--color-select);
@@ -23,7 +22,7 @@
   --color-brass: var(--color-graphite-soft);
   --color-card: var(--color-frame);
   --color-border: var(--color-rule);
-  --color-border-strong: #b5b5b0;
+  --color-border-strong: #c9ccd2;
   --shadow-color: 35 38 43;
 }
 
@@ -65,7 +64,7 @@ html.lenis {
 }
 
 body {
-  background: var(--color-canvas);
+  background: var(--color-frame);
   color: var(--color-graphite);
   font-feature-settings: "ss01", "kern";
 }

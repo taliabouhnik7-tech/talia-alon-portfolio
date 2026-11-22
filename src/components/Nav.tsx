@@ -3,7 +3,7 @@ import Logo from "@/components/Logo";
 
 export default function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-rule/80 bg-canvas/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-rule/70 bg-white/75 backdrop-blur-xl backdrop-saturate-150">
       <nav className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-5 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-[-0.01em] text-graphite">
           <Logo className="h-5 w-auto text-graphite" />

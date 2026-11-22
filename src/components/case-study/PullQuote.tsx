@@ -11,7 +11,7 @@ export default function PullQuote({
   return (
     <Reveal>
       <div className={`border-l-2 ${borderClass} pl-6`}>
-        <p className="font-serif text-xl leading-relaxed text-ink sm:text-2xl">
+        <p className="text-xl font-semibold tracking-[-0.02em] leading-relaxed text-ink sm:text-2xl">
           {children}
         </p>
       </div>

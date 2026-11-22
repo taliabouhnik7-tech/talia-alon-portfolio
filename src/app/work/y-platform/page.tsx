@@ -59,8 +59,8 @@ export default function YPlatformPage() {
 
           <section className="space-y-5">
             <Kicker>Design decisions</Kicker>
-            <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
-              <h3 className="mb-3 font-serif text-xl text-ink sm:text-2xl">
+            <div className="rounded-[12px] bg-canvas p-6 sm:p-8">
+              <h3 className="mb-3 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
                 Trust before action
               </h3>
               <p className="text-sm leading-relaxed text-ink-secondary sm:text-base">
@@ -69,8 +69,8 @@ export default function YPlatformPage() {
                 to feel safe before she&apos;ll commit.
               </p>
             </div>
-            <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
-              <h3 className="mb-3 font-serif text-xl text-ink sm:text-2xl">
+            <div className="rounded-[12px] bg-canvas p-6 sm:p-8">
+              <h3 className="mb-3 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
                 Fewer, calmer steps
               </h3>
               <p className="text-sm leading-relaxed text-ink-secondary sm:text-base">

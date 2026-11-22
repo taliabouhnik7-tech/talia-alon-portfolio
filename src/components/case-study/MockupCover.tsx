@@ -14,7 +14,7 @@ export default function MockupCover({
 }) {
   return (
     <Reveal>
-      <div className="overflow-hidden rounded-sm border border-border-strong bg-card">
+      <div className="overflow-hidden rounded-[12px] bg-canvas ring-1 ring-rule">
         <div className="relative aspect-[4/3] w-full">
           <Image
             src={src}

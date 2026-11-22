@@ -76,6 +76,28 @@ const steps: Step[] = [
 
 const REGIONS: Region[] = ["frontal", "parietal", "temporal", "occipital", "cerebellum", "stem"];
 
+// Short annotation shown on the drawing for each lit region.
+const REGION_NAMES: Partial<Record<Region, string>> = {
+  frontal: "Decisions",
+  parietal: "Attention",
+  temporal: "Language, memory",
+  occipital: "Vision",
+  cerebellum: "Skill",
+};
+
+const centroids = REGIONS.reduce(
+  (acc, r) => {
+    const pts = nodes.filter((n) => n.r === r);
+    acc[r] = [pts.reduce((a, n) => a + n.x, 0) / pts.length, pts.reduce((a, n) => a + n.y, 0) / pts.length];
+    return acc;
+  },
+  {} as Record<Region, [number, number]>
+);
+// Nudge labels so they sit on clear parts of each lobe.
+centroids.frontal = [centroids.frontal[0] - 10, centroids.frontal[1] - 20];
+centroids.parietal = [centroids.parietal[0] + 10, centroids.parietal[1] - 25];
+centroids.temporal = [centroids.temporal[0], centroids.temporal[1] + 10];
+
 export default function Background() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -95,6 +117,7 @@ export default function Background() {
     let lastActive = -2;
     const pulses: { e: number; t: number; v: number }[] = [];
     let frame = 0;
+    let running = false;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -149,7 +172,7 @@ export default function Background() {
       }
 
       draw();
-      frame = requestAnimationFrame(tick);
+      if (running) frame = requestAnimationFrame(tick);
     };
 
     const draw = () => {
@@ -272,12 +295,54 @@ export default function Background() {
         ctx.arc(x, y, morph > 0.9 ? r * 0.7 : r, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // Region annotations, like notes on a design file
+      if (w > 360 && brainAlpha > 0.05) {
+        ctx.font = `500 ${Math.round(Math.max(11, 13 * s))}px ${getComputedStyle(canvas).fontFamily}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (const r of REGIONS) {
+          const name = REGION_NAMES[r];
+          const k = intensity[r] * brainAlpha;
+          if (!name || k < 0.08) continue;
+          const [cx, cy] = centroids[r];
+          const tw = ctx.measureText(name).width;
+          const ph = Math.max(20, 24 * s);
+          const pw = tw + ph * 0.9;
+          ctx.globalAlpha = Math.min(1, k * 1.3);
+          ctx.beginPath();
+          ctx.roundRect(X(cx) - pw / 2, Y(cy) - ph / 2, pw, ph, ph / 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = rgba(COBALT, 0.35);
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = rgba(COBALT, 1);
+          ctx.fillText(name, X(cx), Y(cy) + 0.5);
+          ctx.globalAlpha = 1;
+        }
+      }
     };
 
-    frame = requestAnimationFrame(tick);
+    // Only animate while the section is on screen.
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !running) {
+        running = true;
+        frame = requestAnimationFrame(tick);
+      } else if (!entry.isIntersecting && running) {
+        running = false;
+        cancelAnimationFrame(frame);
+      }
+    });
+    const section = canvas.closest("section");
+    if (section) io.observe(section);
+    tick();
+
     return () => {
+      running = false;
       cancelAnimationFrame(frame);
       ro.disconnect();
+      io.disconnect();
     };
   }, []);
 
@@ -299,7 +364,7 @@ export default function Background() {
         {/* Sticky brain */}
         <div className="sticky top-16 z-10 -mx-5 border-b border-rule bg-frame/90 px-5 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:top-24 lg:mx-0 lg:h-[calc(100vh-8rem)] lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
           <div className="flex h-[30vh] flex-col lg:h-full lg:justify-center">
-            <canvas ref={canvasRef} aria-hidden className="h-full w-full lg:h-[70%]" />
+            <canvas ref={canvasRef} aria-hidden className="h-full w-full font-sans lg:h-[70%]" />
             <p className="mt-2 text-center text-[15px] text-graphite-soft lg:mt-6" aria-live="polite">
               {label}
             </p>

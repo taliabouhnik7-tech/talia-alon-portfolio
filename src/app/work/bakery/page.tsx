@@ -133,17 +133,17 @@ export default function BakeryPage() {
             href="https://talia-alon-bakery-5xt7.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col gap-1 rounded-sm border border-accent/40 bg-accent/[0.06] px-6 py-5 transition-colors hover:border-accent hover:bg-accent/[0.1] sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-1 rounded-[12px] border border-accent/40 bg-accent/[0.06] px-6 py-5 transition-colors hover:border-accent hover:bg-accent/[0.1] sm:flex-row sm:items-center sm:justify-between"
           >
             <span>
-              <span className="block text-sm font-semibold uppercase tracking-[0.08em] text-accent">
+              <span className="block text-[15px] font-semibold text-accent">
                 See it running
               </span>
               <span className="block text-sm text-ink-secondary">
                 talia-alon-bakery-5xt7.vercel.app
               </span>
             </span>
-            <span className="text-lg text-accent">→</span>
+            <span className="text-[15px] font-medium text-accent">Open site</span>
           </a>
 
           <div className="space-y-16">
@@ -158,10 +158,10 @@ export default function BakeryPage() {
                   />
                 </div>
                 <div>
-                  <p className="font-serif text-4xl text-brass/70">
+                  <p className="text-[15px] font-medium tabular-nums text-accent">
                     {moment.number}
                   </p>
-                  <h3 className="mt-2 font-serif text-2xl text-ink">
+                  <h3 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-ink">
                     {moment.title}
                   </h3>
                   <div className="mt-5 space-y-4 text-sm leading-relaxed sm:text-base">

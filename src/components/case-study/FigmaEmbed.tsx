@@ -25,7 +25,7 @@ export default function FigmaEmbed({
 
   return (
     <Reveal>
-      <div className="overflow-hidden rounded-sm border border-border-strong bg-card">
+      <div className="overflow-hidden rounded-[12px] bg-canvas ring-1 ring-rule">
         <div className="aspect-[16/10] w-full">
           <iframe
             src={src}

@@ -13,9 +13,9 @@ export default function ProblemDecision({
 }) {
   return (
     <Reveal>
-      <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
+      <div className="rounded-[12px] bg-canvas p-6 sm:p-8">
         {title ? (
-          <h3 className="mb-4 font-serif text-xl text-ink sm:text-2xl">
+          <h3 className="mb-4 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
             {title}
           </h3>
         ) : null}

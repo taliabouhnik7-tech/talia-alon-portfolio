@@ -9,8 +9,8 @@ export default function TradeOff({
 }) {
   return (
     <Reveal>
-      <div className="rounded-sm border border-dashed border-brass/50 bg-brass/[0.05] p-6 sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-brass">
+      <div className="rounded-[12px] border border-dashed border-border-strong bg-white p-6 sm:p-8">
+        <p className="text-[14px] font-medium text-graphite">
           Honest trade-off
         </p>
         <p className="mt-3 text-sm leading-relaxed text-ink-secondary sm:text-base">

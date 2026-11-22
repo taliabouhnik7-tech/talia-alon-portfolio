@@ -11,11 +11,11 @@ export default function PersonaCard({
 }) {
   return (
     <Reveal>
-      <div className="rounded-sm border border-border bg-card p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-brass">
+      <div className="rounded-[12px] bg-canvas p-6">
+        <p className="text-[14px] font-medium text-graphite">
           Persona
         </p>
-        <h3 className="mt-2 font-serif text-2xl text-ink">{name}</h3>
+        <h3 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-ink">{name}</h3>
         {meta ? (
           <p className="mt-1 text-sm text-ink-secondary">{meta}</p>
         ) : null}

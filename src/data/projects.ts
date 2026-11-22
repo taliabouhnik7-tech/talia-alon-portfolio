@@ -71,7 +71,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Brand identity",
     description: "Logo, type, colour and a full brand book for a sushi brand.",
-    image: "/images/work/omaka/slide-02.webp",
+    image: "https://mir-s3-cdn-cf.behance.net/project_modules/source/a4b88b246033875.69babb6a942b3.png",
     imageFit: "cover",
   },
   {

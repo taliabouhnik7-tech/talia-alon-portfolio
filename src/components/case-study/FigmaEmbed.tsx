@@ -24,7 +24,7 @@ export default function FigmaEmbed({
       <div className="relative aspect-[16/10] w-full">
         <iframe src={embedUrl} title={title} loading="lazy" allowFullScreen className="absolute inset-0 h-full w-full" />
       </div>
-      <div className="flex items-center justify-between border-t border-rule bg-white px-4 py-2.5 text-[14px]">
+      <div className="flex items-center justify-between border-t border-rule bg-canvas px-4 py-2.5 text-[14px]">
         <span className="text-graphite-soft">{title}</span>
         <a href={openUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-select hover:underline">
           Open full screen

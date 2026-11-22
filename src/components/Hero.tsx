@@ -23,7 +23,7 @@ export default function Hero() {
           <div className="mt-6 flex flex-wrap gap-3">
             <a
               href="#work"
-              className="rounded-full bg-graphite px-5 py-2.5 text-[15px] font-medium text-white transition-colors hover:bg-black"
+              className="rounded-full bg-graphite px-5 py-2.5 text-[15px] font-medium text-frame transition-colors hover:bg-white"
             >
               See my work
             </a>

@@ -31,7 +31,7 @@ export default function WorkGrid() {
               aria-selected={filter === f.id}
               onClick={() => setFilter(f.id)}
               className={`rounded-full px-4 py-1.5 text-[15px] transition-colors ${
-                filter === f.id ? "bg-white font-medium text-graphite shadow-sm ring-1 ring-rule" : "text-graphite-soft hover:text-graphite"
+                filter === f.id ? "bg-rule font-medium text-graphite" : "text-graphite-soft hover:text-graphite"
               }`}
             >
               {f.label}

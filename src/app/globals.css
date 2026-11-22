@@ -2,28 +2,29 @@
 
 /*
  * Design tokens.
- * Clean white page, cool light-grey surfaces, graphite ink, and one cobalt
- * "selection" colour used only for what is active, focused or chosen.
+ * A deep blue-black page, slightly raised surfaces, soft white text, and one
+ * signal blue, the colour of the brain's lit neurons, used only for what is
+ * active, focused or chosen.
  */
 :root {
-  --color-canvas: #f2f3f5;
-  --color-frame: #ffffff;
-  --color-graphite: #1a1d22;
-  --color-graphite-soft: #5d626b;
-  --color-rule: #e2e4e8;
-  --color-select: #3552f2;
+  --color-canvas: #111722;
+  --color-frame: #090c13;
+  --color-graphite: #e8ecf4;
+  --color-graphite-soft: #929bad;
+  --color-rule: #1f2633;
+  --color-select: #5d8eff;
 
   /* Legacy names used across case-study pages, mapped onto the new system. */
   --color-paper: var(--color-frame);
   --color-ink: var(--color-graphite);
   --color-ink-secondary: var(--color-graphite-soft);
   --color-accent: var(--color-select);
-  --color-accent-strong: #2a43d1;
+  --color-accent-strong: #86abff;
   --color-brass: var(--color-graphite-soft);
   --color-card: var(--color-frame);
   --color-border: var(--color-rule);
-  --color-border-strong: #c9ccd2;
-  --shadow-color: 35 38 43;
+  --color-border-strong: #2e3748;
+  --shadow-color: 0 0 0;
 }
 
 @theme inline {
@@ -61,6 +62,10 @@ html.lenis {
 }
 .lenis.lenis-stopped {
   overflow: hidden;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {

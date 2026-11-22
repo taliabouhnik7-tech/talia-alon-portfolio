@@ -16,7 +16,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
         />
         {live && (
-          <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[13px] font-medium text-graphite backdrop-blur">
+          <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-frame/80 backdrop-blur px-2.5 py-1 text-[13px] font-medium text-graphite backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-[#2f9e5b]" />
             Live
           </span>

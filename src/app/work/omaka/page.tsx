@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
-import MockupCover from "@/components/case-study/MockupCover";
-import SlideDeck from "@/components/case-study/SlideDeck";
+import SlideStack from "@/components/case-study/SlideStack";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
 
@@ -11,6 +10,10 @@ export const metadata: Metadata = {
   title: "OMAKA brand book | Talia Alon",
   description: "Brand identity and brand book for Omaka, a sushi brand: logo, typography and colour rules.",
 };
+
+// The original full-resolution pages, served from Talia's Behance project.
+const SRC = "https://mir-s3-cdn-cf.behance.net/project_modules/source/";
+const SLIDES = ["e6c5c0246033875.69babb6a90488.png", "a4b88b246033875.69babb6a942b3.png", "ad968f246033875.69babb6a90a15.png", "9fe3f4246033875.69babb6a9144c.png", "3ee516246033875.69babb6a90f01.png", "0e503d246033875.69babb6a93e8e.png", "5c29f3246033875.69babb6a92d78.png", "feb19d246033875.69babb6a93897.png", "1ff862246033875.69babb6a93259.png", "08fccf246033875.69babb6a91e8b.png", "7cf3f8246033875.69babb6a92868.png", "f5ef25246033875.69babb6a92387.png", "33b59b246033875.69babb6a9198a.png"];
 
 export default function OmakaPage() {
   return (
@@ -20,7 +23,14 @@ export default function OmakaPage() {
         <CaseStudyHeader kicker="Case Study · Solo · Branding · Brand Book" title="OMAKA — brand book" />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <MockupCover src="/images/work/omaka/slide-02.webp" alt="The Omaka logo: two white rings forming a fish, above the name in red" priority fit="cover" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${SRC}${SLIDES[1]}`}
+            alt="The Omaka logo: two white rings forming a fish, above the name in red"
+            width={1400}
+            height={788}
+            className="block h-auto w-full rounded-[12px] bg-[#f3f3f3]"
+          />
 
           <dl className="grid grid-cols-1 gap-x-8 gap-y-3 border-y border-border py-6 text-sm sm:grid-cols-2">
             <div className="flex gap-2"><dt className="font-semibold text-ink">Role:</dt><dd className="text-ink-secondary">Brand identity, solo</dd></div>
@@ -50,8 +60,8 @@ export default function OmakaPage() {
 
           <section>
             <Kicker>The brand book</Kicker>
-            <SlideDeck
-              title="OMAKA brand book"
+            <p className="mb-6 text-ink-secondary">All 13 pages, in order.</p>
+            <SlideStack
               slides={[
                 "Cover",
                 "Primary logo",
@@ -66,7 +76,7 @@ export default function OmakaPage() {
                 "Billboard: Roll into Love",
                 "Branded chopsticks",
                 "Thank you",
-              ].map((alt, k) => ({ src: `/images/work/omaka/slide-${String(k + 1).padStart(2, "0")}.webp`, alt }))}
+              ].map((alt, k) => ({ src: `${SRC}${SLIDES[k]}`, alt }))}
             />
           </section>
         </div>

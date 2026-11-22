@@ -3,7 +3,6 @@ import Image from "next/image";
 import type { Project } from "@/data/projects";
 
 export default function ProjectCard({ project }: { project: Project }) {
-  const fit = project.imageFit ?? "contain";
   const live = project.category === "Live product";
 
   return (
@@ -14,7 +13,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           alt={`${project.title} cover`}
           fill
           sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
-          className={fit === "cover" ? "object-cover" : "object-contain p-4"}
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
         />
         {live && (
           <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[13px] font-medium text-graphite backdrop-blur">
@@ -29,7 +28,7 @@ export default function ProjectCard({ project }: { project: Project }) {
       <p className="mt-1 text-[15px] text-graphite-soft">
         {project.category}, {project.role === "Solo" ? "solo" : "team"}
       </p>
-      <p className="mt-2 line-clamp-2 text-[15px] leading-[1.5] text-graphite-soft">{project.description}</p>
+      <p className="mt-2 text-[15px] leading-[1.5] text-graphite-soft">{project.description}</p>
     </Link>
   );
 }

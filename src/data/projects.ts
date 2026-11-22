@@ -15,7 +15,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Live product",
     description:
-      "Ordering site and admin system for my home bakery. I designed it in Figma, then built and launched it. Real customers order from it every week.",
+      "My own ordering site and admin, designed in Figma and built by me. Live, with real orders.",
     image: "/images/work/bakery-cover.webp",
   },
   {
@@ -24,7 +24,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Enterprise SaaS",
     description:
-      "Stakeholder research and a new information architecture for the main screen, with simpler navigation and an easier transcript layout.",
+      "Stakeholder research and a clearer information architecture for a meeting-insights product.",
     image: "/images/work/audiocodes-cover.png",
   },
   {
@@ -33,7 +33,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "EdTech, UX/UI and branding",
     description:
-      "An online math course for grades 7 to 12: information architecture, user flows, the course catalogue and the brand.",
+      "An online math course for grades 7–12: flows, catalogue and the full brand.",
     image: "/images/work/y-platform-cover.png",
   },
   {
@@ -42,7 +42,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "AI product",
     description:
-      "A training dashboard for kitchen professionals with an AI coach, skill tracking and personal recommendations.",
+      "A training dashboard for chefs, with an AI coach and skill tracking.",
     image: "/images/work/chef-coach-cover.png",
   },
   {
@@ -51,7 +51,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Mobile app, AI",
     description:
-      "A short-video learning app: AI-generated lessons, cliffhanger endings and a community of curious people.",
+      "A short-video learning app with AI lessons and cliffhanger endings.",
     image: "/images/work/spark-cover.webp",
     imageFit: "cover",
   },
@@ -61,7 +61,7 @@ export const projects: Project[] = [
     role: "Solo",
     category: "Donation site, real client",
     description:
-      "A donation page for a synagogue renovation. Two ways to give, Paybox or bank transfer, and nothing in the way.",
+      "A donation page for a real synagogue campaign. Two ways to give, nothing in the way.",
     image: "/images/work/heichal-etzion-cover.webp",
     imageFit: "cover",
   },
@@ -70,8 +70,8 @@ export const projects: Project[] = [
     title: "OMAKA",
     role: "Solo",
     category: "Brand identity",
-    description: "Logo, typography and a brand book for a sushi brand, built around two rings that form a fish.",
-    image: "/images/work/omaka-cover.webp",
+    description: "Logo, type, colour and a full brand book for a sushi brand.",
+    image: "/images/work/omaka/slide-02.webp",
     imageFit: "cover",
   },
   {
@@ -80,7 +80,7 @@ export const projects: Project[] = [
     role: "Team",
     category: "Mobile app",
     description:
-      "A location-based messaging app for Israelis abroad. Research, personas, wireframes, a component library and a Figma prototype.",
+      "A location-based app that helps Israelis abroad find help and each other.",
     image: "/images/work/bubble-cover.png",
   },
   {
@@ -89,7 +89,7 @@ export const projects: Project[] = [
     role: "Team",
     category: "Luxury e-commerce",
     description:
-      "A jewelry store for web and mobile that carries a premium brand through every screen, from browsing to checkout.",
+      "Luxury jewelry e-commerce for web and mobile, built around trust.",
     image: "/images/work/aloora-cover.png",
   },
   {
@@ -98,7 +98,7 @@ export const projects: Project[] = [
     role: "Team",
     category: "Campaign microsite",
     description:
-      "A playful microsite built on nostalgia for Tangled, raising ticket money and hair donations for cancer patients.",
+      "A campaign microsite turning nostalgia for Tangled into donations.",
     image: "/images/work/tangled-cover.png",
   },
 ];

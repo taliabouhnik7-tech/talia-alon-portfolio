@@ -3,7 +3,6 @@ import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
-import PlaceholderImage from "@/components/PlaceholderImage";
 import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
 
@@ -146,17 +145,14 @@ export default function BakeryPage() {
             <span className="text-[15px] font-medium text-accent">Open site</span>
           </a>
 
-          <div className="space-y-16">
+          <section>
+          <Kicker>Five design decisions</Kicker>
+          <div className="space-y-4">
             {moments.map((moment) => (
               <div
                 key={moment.number}
-                className="grid gap-6 sm:grid-cols-2 sm:gap-10"
+                className="rounded-[12px] bg-canvas p-6 sm:p-8"
               >
-                <div className="order-2 sm:order-none">
-                  <PlaceholderImage
-                    label={`Screenshot pending — moment ${moment.number}`}
-                  />
-                </div>
                 <div>
                   <p className="text-[15px] font-medium tabular-nums text-accent">
                     {moment.number}
@@ -190,6 +186,7 @@ export default function BakeryPage() {
               </div>
             ))}
           </div>
+          </section>
 
           <section>
             <Kicker>Why</Kicker>

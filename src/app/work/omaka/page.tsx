@@ -3,6 +3,7 @@ import Nav from "@/components/Nav";
 import ContactFooter from "@/components/ContactFooter";
 import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
+import SlideDeck from "@/components/case-study/SlideDeck";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
 
@@ -19,7 +20,7 @@ export default function OmakaPage() {
         <CaseStudyHeader kicker="Case Study · Solo · Branding · Brand Book" title="OMAKA — brand book" />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
-          <MockupCover src="/images/work/omaka-cover.webp" alt="The Omaka logo: two white rings forming a fish, above the name in red" priority fit="cover" />
+          <MockupCover src="/images/work/omaka/slide-02.webp" alt="The Omaka logo: two white rings forming a fish, above the name in red" priority fit="cover" />
 
           <dl className="grid grid-cols-1 gap-x-8 gap-y-3 border-y border-border py-6 text-sm sm:grid-cols-2">
             <div className="flex gap-2"><dt className="font-semibold text-ink">Role:</dt><dd className="text-ink-secondary">Brand identity, solo</dd></div>
@@ -48,34 +49,26 @@ export default function OmakaPage() {
           </section>
 
           <section>
-            <Kicker>The brand in use</Kicker>
-            <div className="grid gap-4">
-              {[
-                ["logo-versions", "The logo in colour and in white"],
-                ["cards", "Business cards on a dark wave pattern"],
-                ["signage", "Mall signage: one bite, endless joy"],
-                ["poster", "Street poster for new club members"],
-                ["billboard", "Billboard: Roll into Love"],
-                ["post", "Instagram post"],
-                ["story", "Instagram story"],
-                ["chopsticks", "Branded chopsticks"],
-              ].map(([f, alt]) => (
-                <figure key={f} className="overflow-hidden rounded-[12px] bg-black ring-1 ring-rule">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/images/work/omaka/${f}.webp`} alt={alt} loading="lazy" className="w-full" />
-                  <figcaption className="bg-white px-4 py-2.5 text-[14px] text-graphite-soft">{alt}</figcaption>
-                </figure>
-              ))}
-            </div>
+            <Kicker>The brand book</Kicker>
+            <SlideDeck
+              title="OMAKA brand book"
+              slides={[
+                "Cover",
+                "Primary logo",
+                "Logo versions: colour, outline and white",
+                "Typography: Comfortaa for the logo and the brand",
+                "Brand colours: white, red and black",
+                "Business cards",
+                "Roll-up banner: one bite, endless joy",
+                "Instagram post",
+                "Poster for new club members",
+                "Instagram story",
+                "Billboard: Roll into Love",
+                "Branded chopsticks",
+                "Thank you",
+              ].map((alt, k) => ({ src: `/images/work/omaka/slide-${String(k + 1).padStart(2, "0")}.webp`, alt }))}
+            />
           </section>
-          <a
-            href="https://www.behance.net/gallery/246033875/OMAKA-Brand-Book-2026"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[15px] font-medium text-select hover:underline"
-          >
-            Also on Behance
-          </a>
         </div>
       </main>
       <ContactFooter />

@@ -1,7 +1,9 @@
 const links = [
   { label: "Email", value: "taliabouhnik7@gmail.com", href: "mailto:taliabouhnik7@gmail.com" },
   { label: "Phone", value: "058-666-6623", href: "tel:+972586666623" },
+  { label: "LinkedIn", value: "Talia Bouhnik", href: "https://www.linkedin.com/in/talia-bouhnik-091196412", external: true },
   { label: "Behance", value: "behance.net/5dec536b", href: "https://www.behance.net/5dec536b", external: true },
+  { label: "CV", value: "Download PDF", href: "/cv/Talia_Alon_CV.pdf", external: true },
 ];
 
 export default function ContactFooter() {
@@ -15,7 +17,7 @@ export default function ContactFooter() {
               Hiring for a UX/UI role? I&apos;d be happy to talk.
             </p>
           </div>
-          <dl className="grid gap-6 sm:grid-cols-[1.5fr_1fr_1.2fr]">
+          <dl className="grid gap-6 sm:grid-cols-[1.5fr_1fr_1fr]">
             {links.map((l) => (
               <div key={l.label}>
                 <dt className="text-[15px] text-graphite-soft">{l.label}</dt>

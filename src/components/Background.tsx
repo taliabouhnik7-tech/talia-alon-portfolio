@@ -25,6 +25,7 @@ const SCREEN = "#0d1220";
 
 type Step = {
   where: string;
+  when?: string;
   title: string;
   body: string;
   design: string;
@@ -35,6 +36,7 @@ type Step = {
 const steps: Step[] = [
   {
     where: "Ben Gurion University",
+    when: "2021–2024",
     title: "B.Sc. in Cognitive & Brain Sciences, minor in math",
     body: "How people perceive, pay attention, remember and decide, and the research methods behind it: ask a clear question, test it, read the data honestly.",
     design: "Fewer choices per screen, a clear visual hierarchy, and decisions backed by evidence rather than taste.",
@@ -43,14 +45,16 @@ const steps: Step[] = [
   },
   {
     where: "STEM instruction and private tutoring",
-    title: "Teaching math one on one",
-    body: "Sessions with students who were stuck. The question they asked was rarely the real problem.",
+    when: "2020–2025",
+    title: "Teaching math and science",
+    body: "Math tutoring for children and teens, on my own and through the PERACH project, then teaching STEM at Technoda.",
     design: "I bring the same habit to user research: listen longer, find the real question, then design.",
     regions: ["temporal", "frontal"],
     regionLabel: "Language and planning",
   },
   {
     where: "HackerU",
+    when: "2025–2026",
     title: "UX/UI design program",
     body: "The full process on solo and team projects: research, personas, user flows, information architecture, wireframes, UI and prototypes.",
     design: "A process I still follow on every project, so nothing gets designed before it's understood.",
@@ -59,6 +63,7 @@ const steps: Step[] = [
   },
   {
     where: "Udemy",
+    when: "2026",
     title: "Advanced Figma",
     body: "A certificate course in advanced Figma: building reusable components, responsive layouts and interactive prototypes.",
     design: "Organised files a developer can build from, not just screens that look right.",
@@ -75,8 +80,9 @@ const steps: Step[] = [
   },
   {
     where: "Ariel University",
+    when: "Since September 2026",
     title: "Marketing communications coordinator",
-    body: "My current role, since September 2026: coordinating the university's marketing communications.",
+    body: "My current role: coordinating the university's marketing communications.",
     design: "Daily practice in writing for a real audience and working with many people across an organisation.",
     regions: ["temporal", "frontal"],
     regionLabel: "Language and planning",
@@ -866,6 +872,7 @@ export default function Background() {
                   <p className="text-[15px] text-graphite-soft">
                     <span className="mr-3 tabular-nums text-select">{String(i + 1).padStart(2, "0")}</span>
                     {step.where}
+                    {step.when ? <span className="text-graphite-soft/70">, {step.when}</span> : null}
                   </p>
                   <h3 className="mt-2 text-[26px] leading-[1.15] font-semibold tracking-[-0.02em] text-graphite sm:text-[30px]">
                     {step.title}

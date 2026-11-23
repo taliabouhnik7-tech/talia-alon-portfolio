@@ -14,12 +14,16 @@ type FilterId = (typeof filters)[number]["id"];
 
 // The four deepest case studies lead; the rest follow as more work.
 const FEATURED = ["bakery", "audiocodes", "y-platform", "chef-coach"];
+// In More projects, the ones Talia is proudest of take the first row.
+const MORE_ORDER = ["bubble", "aloora", "omaka", "spark", "heichal-etzion", "tangled"];
 
 export default function WorkGrid() {
   const [filter, setFilter] = useState<FilterId>("all");
   const list = filter === "all" ? projects : projects.filter((p) => p.role === filter);
   const featured = list.filter((p) => FEATURED.includes(p.slug));
-  const more = list.filter((p) => !FEATURED.includes(p.slug));
+  const more = list
+    .filter((p) => !FEATURED.includes(p.slug))
+    .sort((a, b) => MORE_ORDER.indexOf(a.slug) - MORE_ORDER.indexOf(b.slug));
 
   return (
     <section id="work" className="mx-auto w-full max-w-[1200px] scroll-mt-16 px-5 pb-20 sm:px-8 sm:pb-28">

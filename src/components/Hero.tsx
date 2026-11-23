@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Hero() {
   return (
     <section id="top" className="mx-auto w-full max-w-[1200px] px-5 pt-14 pb-12 sm:px-8 sm:pt-20 sm:pb-16">
-      <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto] lg:gap-16">
+      <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-stretch lg:gap-16">
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-[56px] leading-[0.95] font-semibold tracking-[-0.045em] text-graphite sm:text-[88px] lg:text-[112px]">
@@ -43,15 +43,15 @@ export default function Hero() {
           </div>
         </div>
       </div>
-      <div className="relative order-first w-[132px] overflow-hidden rounded-[14px] bg-canvas sm:w-[168px] lg:order-none lg:w-[340px]">
+      {/* On desktop the photo spans exactly from the name to the buttons. */}
+      <div className="relative order-first aspect-[4/5] w-[132px] overflow-hidden rounded-[14px] bg-canvas sm:w-[168px] lg:order-none lg:mt-[9px] lg:aspect-auto lg:h-[calc(100%-9px)] lg:w-[280px]">
         <Image
           src="/images/talia.webp"
           alt="Talia Alon"
-          width={640}
-          height={800}
+          fill
           priority
-          sizes="(min-width: 1024px) 340px, 168px"
-          className="block h-auto w-full"
+          sizes="(min-width: 1024px) 280px, 168px"
+          className="object-cover object-[center_25%]"
         />
       </div>
       </div>

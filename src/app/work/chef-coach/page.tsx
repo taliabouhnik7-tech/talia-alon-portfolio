@@ -6,11 +6,12 @@ import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
+import ProblemDecision from "@/components/case-study/ProblemDecision";
 
 export const metadata: Metadata = {
   title: "Chef Coach | Talia Alon",
   description:
-    "A culinary training dashboard built around an AI coach — skill tracking, personalized recommendations, and community support for kitchen professionals.",
+    "A culinary training dashboard built around an AI coach: skill tracking, personalized recommendations, and community support for kitchen professionals.",
 };
 
 export default function ChefCoachPage() {
@@ -33,13 +34,44 @@ export default function ChefCoachPage() {
           <section>
             <Kicker>About this project</Kicker>
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
-              A culinary training dashboard built around an AI coach —
+              A culinary training dashboard built around an AI coach:
               skill tracking, personalized recommendations, and community
               support for kitchen professionals.
             </p>
           </section>
 
           <section>
+            <Kicker>Research</Kicker>
+            <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
+              A product design document with three personas, a 13-scenario use
+              case script and a competitor analysis, plus a stakeholder
+              interview that defined the screen layout.
+            </p>
+          </section>
+
+          <section>
+            <Kicker>Key decisions</Kicker>
+            <div className="space-y-4">
+              <ProblemDecision
+                title="Check-in, not Start a Shift"
+                problem="The coach is used off service, not during a shift in the kitchen."
+                decision="Renamed the entry point from “Start a Shift” to “Check-in”, so the language matches when people actually use it."
+              />
+              <ProblemDecision
+                title="Mastery, not leaderboards"
+                problem="How to show a cook’s progress over time."
+                decision="Rank progression based on mastering skills, with no leaderboards."
+              />
+              <ProblemDecision
+                title="A habit loop, not an addiction loop"
+                problem="There was a request for more “addictive” engagement mechanics."
+                decision="Kept engagement to habit-building: a short check-in, a coach tone each user picks (supportive or tough), and a wellbeing zone for pressure."
+              />
+            </div>
+          </section>
+
+          <section>
+            <Kicker>Try the prototype</Kicker>
             <FigmaEmbed
               fileKey="uuDXGI4ppJTTvwjodTGOHx"
               fileName="Chef Coach"
@@ -49,7 +81,7 @@ export default function ChefCoachPage() {
           </section>
 
           <section>
-            <Kicker>Process &amp; Details</Kicker>
+            <Kicker>Design system</Kicker>
             <p className="mb-6 text-sm leading-relaxed text-ink-secondary sm:text-base">
               Pulled directly from the file&apos;s own design-tokens
               documentation and behavior annotations.
@@ -69,7 +101,7 @@ export default function ChefCoachPage() {
                 {
                   label: "Border radius",
                   description:
-                    "Only two options — sharp (0) or fully round (100px), no in-between values.",
+                    "Only two options: sharp (0) or fully round (100px), no in-between values.",
                 },
                 {
                   label: "Interaction detail",

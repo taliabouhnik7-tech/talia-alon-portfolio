@@ -10,7 +10,7 @@ import Kicker from "@/components/Kicker";
 export const metadata: Metadata = {
   title: "Tangled Fan Experience | Talia Alon",
   description:
-    "A movie-themed microsite tying nostalgia for Tangled to a real cause — ticket proceeds and hair donations supporting cancer patients.",
+    "A movie-themed microsite tying nostalgia for Tangled to a real cause: ticket proceeds and hair donations supporting cancer patients.",
 };
 
 export default function TangledPage() {
@@ -35,7 +35,7 @@ export default function TangledPage() {
             <Kicker>Concept</Kicker>
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
               A charity screening where ticket proceeds and an on-site
-              hair-donation station support cancer patients — built around
+              hair-donation station support cancer patients, built around
               nostalgia for Tangled rather than treating the film as a
               simple backdrop.
             </p>

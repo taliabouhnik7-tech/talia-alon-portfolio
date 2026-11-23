@@ -9,7 +9,7 @@ import Kicker from "@/components/Kicker";
 export const metadata: Metadata = {
   title: "Talia Alon Bakery | Talia Alon",
   description:
-    "A live, deployed ordering site and admin system for a home bakery — designed end to end in Figma, then directed into production.",
+    "A live, deployed ordering site and admin system for a home bakery. Designed end to end in Figma, then directed into production.",
 };
 
 type Moment = {
@@ -25,25 +25,25 @@ const moments: Moment[] = [
     number: "01",
     title: "A mobile pattern that didn't belong on desktop",
     problem:
-      "The category switcher was a filled, pill-shaped toggle — natural on a phone, but once the layout opened up to desktop width, it read as an app control sitting inside a website.",
+      "The category switcher was a filled, pill-shaped toggle. Natural on a phone, but once the layout opened up to desktop width, it read as an app control sitting inside a website.",
     decision:
       "Kept the filled pill on mobile. On desktop, gave it an outlined treatment that matches the site's other buttons, with a filled state only when a category is active.",
-    why: "The two versions needed to feel like the same product, not identical controls — each one native to how people actually tap or click at that size.",
+    why: "The two versions needed to feel like the same product, not identical controls. Each one native to how people actually tap or click at that size.",
   },
   {
     number: "02",
     title: "A header pattern that changed its mind by screen width",
     problem:
-      "The decorative stripe pattern behind the logo scaled unevenly across phone widths — a different number of stripes depending on the device, some barely wide enough to register. It read as noise, not a calm brand backdrop.",
+      "The decorative stripe pattern behind the logo scaled unevenly across phone widths: a different number of stripes depending on the device, some barely wide enough to register. It read as noise, not a calm brand backdrop.",
     decision:
-      "Rebuilt it as a single CSS gradient locked to exactly seven equal-width stripes at any screen size — an odd count so the strong brand color always lands on both outer edges.",
+      "Rebuilt it as a single CSS gradient locked to exactly seven equal-width stripes at any screen size. An odd count so the strong brand color always lands on both outer edges.",
     why: "A pattern that shifts density with viewport width reads as accidental. One that holds its rhythm at every size reads as designed.",
   },
   {
     number: "03",
     title: "An order summary with no clear focal point",
     problem:
-      "Early cart rows gave the photo, category badge, product name, price, and quantity control equal visual weight. Nothing told the eye where to land — the screen felt cluttered despite holding very little information.",
+      "Early cart rows gave the photo, category badge, product name, price, and quantity control equal visual weight. Nothing told the eye where to land. The screen felt cluttered despite holding very little information.",
     decision:
       "Rebuilt the hierarchy so price is the dominant element in every row, the product name reads clearly but secondary, and the quantity/remove controls pull back to a quiet, outlined style.",
     why: "The price is what a customer checks twice before sending an order. Everything else in the row should support that glance, not compete with it.",
@@ -55,15 +55,15 @@ const moments: Moment[] = [
       "A full-width +/- stepper worked well as an 'add to cart' action, but felt oversized and out of place once a product already had a quantity attached, especially inside the compact cart list.",
     decision:
       "Designed a two-state control: a small, quiet count badge at rest, which expands into a compact +/- stepper on demand and collapses again once you're done.",
-    why: "The interaction only earns visual prominence at the moment someone is actually using it — the rest of the time, it should read as information, not an invitation to act.",
+    why: "The interaction only earns visual prominence at the moment someone is actually using it. The rest of the time, it should read as information, not an invitation to act.",
   },
   {
     number: "05",
     title: "An admin built for the person who'd actually use it",
     problem:
-      "Every price update, new photo, or seasonal promotion would otherwise mean editing code — unworkable for a one-person business with no engineering background.",
+      "Every price update, new photo, or seasonal promotion would otherwise mean editing code, which is unworkable for a one-person business with no engineering background.",
     decision:
-      "Designed an admin dashboard with a live theme editor — colors, type, and spacing with a real-time preview — plus a built-in check that flags any color pairing failing WCAG contrast before it ships, and simple tools to add curated homepage sections without touching a file.",
+      "Designed an admin dashboard with a live theme editor (colors, type and spacing with a real-time preview), plus a built-in check that flags any color pairing failing WCAG contrast before it ships, and simple tools to add curated homepage sections without touching a file.",
     why: "The real 'user' of this screen is a business owner on a busy Tuesday, not a developer in a demo. The design had to hold up under that, not just look good in a walkthrough.",
   },
 ];
@@ -114,15 +114,15 @@ export default function BakeryPage() {
             <p>
               The brief was my own. I run a home bakery under my own name,
               and I needed an ordering flow simple enough for a customer to
-              use in under a minute — browse, add to an order, send it to me
-              on WhatsApp — with no payment processing to manage. I also
+              use in under a minute: browse, add to an order, send it to me
+              on WhatsApp. No payment processing to manage. I also
               needed to run the business day to day without asking a
               developer for every price change, new photo, or seasonal
               menu.
             </p>
             <p>
               So I designed the full product in Figma, then directed its
-              build into a live, deployed site — making every UX and visual
+              build into a live, deployed site, making every UX and visual
               decision along the way, from the first wireframe to the shade
               of a hover state.
             </p>
@@ -193,8 +193,8 @@ export default function BakeryPage() {
             <PullQuote tone="brass">
               The site is live and taking real orders. Because the product
               and the admin share one design-token system, I can keep
-              refining the visual language — a color, a spacing scale, a
-              whole seasonal section — without waiting on a developer for
+              refining the visual language (a color, a spacing scale, a
+              whole seasonal section) without waiting on a developer for
               each change. That loop, design → ship → observe → refine, is
               the part of this project I&apos;d want to bring into any team
               I join.

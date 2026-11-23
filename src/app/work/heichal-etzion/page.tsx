@@ -34,7 +34,7 @@ export default function HeichalEtzionPage() {
           <section>
             <Kicker>About this project</Kicker>
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
-              A donation site for a synagogue&apos;s renovation campaign —
+              A donation site for a synagogue&apos;s renovation campaign,
               built for a real community, with a simple flow to give via
               Paybox or bank transfer.
             </p>
@@ -56,7 +56,7 @@ export default function HeichalEtzionPage() {
                 {
                   label: "Client",
                   description:
-                    "A real synagogue renovation campaign — not a self-directed brief.",
+                    "A real synagogue renovation campaign, not a self-directed brief.",
                 },
                 {
                   label: "Flow",

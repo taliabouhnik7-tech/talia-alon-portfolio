@@ -1,4 +1,4 @@
-/** Small section label. Sentence case, quiet — it names, it doesn't shout. */
+/** Section heading inside a case study. */
 export default function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="mb-3 text-[15px] font-medium text-graphite-soft">{children}</p>;
+  return <h2 className="mb-4 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-graphite">{children}</h2>;
 }

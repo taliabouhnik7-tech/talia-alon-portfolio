@@ -7,10 +7,10 @@ export type Stat = {
 
 export default function StatGrid({ stats }: { stats: Stat[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div className={`grid grid-cols-2 gap-4 ${stats.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
       {stats.map((stat, i) => (
         <Reveal key={stat.label} delay={(i % 4) * 0.06}>
-          <div className="rounded-[12px] bg-canvas p-5">
+          <div className="h-full rounded-[12px] bg-canvas p-5">
             <p className="text-3xl font-semibold tracking-[-0.02em] text-accent">{stat.value}</p>
             <p className="mt-2 text-sm leading-snug text-ink-secondary">
               {stat.label}

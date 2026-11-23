@@ -11,9 +11,9 @@ import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
-  title: "Y — Math Learning Platform | Talia Alon",
+  title: "Y: Math Learning Platform | Talia Alon",
   description:
-    "End-to-end design for an online math course platform — information architecture, user flows, catalogue, and full brand identity.",
+    "End-to-end design for an online math course platform: information architecture, user flows, catalogue, and full brand identity.",
 };
 
 export default function YPlatformPage() {
@@ -24,7 +24,7 @@ export default function YPlatformPage() {
         <CaseStudyHeader
           kicker="Case Study · Solo · EdTech · UX/UI + Branding"
           title="Y — Math Learning Platform"
-          tagline={`"הופכים את המתמטיקה לפשוטה ושמים סוף לתסכול" — making math simple and ending the frustration.`}
+          tagline={`"הופכים את המתמטיקה לפשוטה ושמים סוף לתסכול": making math simple and ending the frustration.`}
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
@@ -53,7 +53,7 @@ export default function YPlatformPage() {
             <ProblemDecision
               title="2. Pace"
               problem="One-size-fits-all teaching doesn't fit every student."
-              decision="Gave the student full control over pace — repeat a lesson four times or skip ahead, full 24/7 access to all material."
+              decision="Gave the student full control over pace: repeat a lesson four times or skip ahead, full 24/7 access to all material."
             />
           </section>
 
@@ -75,7 +75,7 @@ export default function YPlatformPage() {
               </h3>
               <p className="text-sm leading-relaxed text-ink-secondary sm:text-base">
                 User research surfaced that Neta&apos;s impatience meant
-                &quot;three light steps beat one confusing step&quot; —
+                &quot;three light steps beat one confusing step&quot;:
                 flows were broken into smaller, calmer stages rather than
                 dense single screens.
               </p>
@@ -85,15 +85,15 @@ export default function YPlatformPage() {
           <section>
             <Kicker>A real design tension</Kicker>
             <TradeOff
-              tension={`The team considered a daily streak mechanic for motivation, then flagged it explicitly as a risk: "a streak mechanism can create motivation — but also pressure and guilt. For an anxious user, it could drive her away."`}
-              resolution="Recognition without punishment — the system quietly remembers where she left off, instead of showing a 'broken streak.'"
+              tension={`The team considered a daily streak mechanic for motivation, then flagged it explicitly as a risk: "a streak mechanism can create motivation, but also pressure and guilt. For an anxious user, it could drive her away."`}
+              resolution="Recognition without punishment. The system quietly remembers where she left off, instead of showing a 'broken streak.'"
             />
           </section>
 
           <section>
             <Kicker>Why</Kicker>
             <PullQuote>
-              Every decision traced back to one source — who Neta is, and
+              Every decision traced back to one source: who Neta is, and
               what she needs right now.
             </PullQuote>
           </section>

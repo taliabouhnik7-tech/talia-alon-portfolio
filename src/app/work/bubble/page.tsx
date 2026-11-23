@@ -10,9 +10,9 @@ import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
-  title: "Bubble — Social Networking App | Talia Alon",
+  title: "Bubble: Social Networking App | Talia Alon",
   description:
-    "A location-based messaging app connecting Israelis abroad — research, personas, wireframes, and a Figma prototype.",
+    "A location-based messaging app connecting Israelis abroad: research, personas, wireframes, and a Figma prototype.",
 };
 
 const scenarios = [
@@ -30,7 +30,7 @@ export default function BubblePage() {
         <CaseStudyHeader
           kicker="Case Study · Team · UX/UI"
           title="Bubble — Social Networking App"
-          tagline={`"מחברים בין ישראלים לפי מיקומם" — connecting Israelis abroad by location.`}
+          tagline={`"מחברים בין ישראלים לפי מיקומם": connecting Israelis abroad by location.`}
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
@@ -43,7 +43,7 @@ export default function BubblePage() {
           <section>
             <Kicker>Concept</Kicker>
             <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
-              Bubble connects Israelis abroad by location — a way to find
+              Bubble connects Israelis abroad by location: a way to find
               nearby people, ask for help, get local recommendations, and
               reunite lost items with their owners, without relying on
               general-purpose social networks.
@@ -140,7 +140,7 @@ export default function BubblePage() {
             <Kicker>Why</Kicker>
             <PullQuote>
               The research made clear that trust and locality were the real
-              product, not a feature list — so the roadmap protected the
+              product, not a feature list, so the roadmap protected the
               core (finding and safely reaching nearby people) before
               investing in anything that made the app more &quot;fun&quot;
               but less essential.

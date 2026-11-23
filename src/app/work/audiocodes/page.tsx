@@ -6,6 +6,7 @@ import MockupCover from "@/components/case-study/MockupCover";
 import FigmaEmbed from "@/components/case-study/FigmaEmbed";
 import FactGrid from "@/components/case-study/FactGrid";
 import Kicker from "@/components/Kicker";
+import StatGrid from "@/components/case-study/StatGrid";
 
 export const metadata: Metadata = {
   title: "AudioCodes Meeting Insights | Talia Alon",
@@ -40,6 +41,30 @@ export default function AudioCodesPage() {
           </section>
 
           <section>
+            <Kicker>Research</Kicker>
+            <p className="text-base leading-relaxed text-ink-secondary sm:text-lg">
+              Interviews with two people who build the product: its UI lead
+              and a frontend developer.
+            </p>
+          </section>
+
+          <section>
+            <Kicker>Result</Kicker>
+            <p className="mb-6 text-base leading-relaxed text-ink-secondary sm:text-lg">
+              The Summary and Transcription views were redesigned, and the
+              header went from 18 elements to 4.
+            </p>
+            <StatGrid
+              stats={[
+                { value: "18 → 4", label: "Elements in the screen header, before and after" },
+                { value: "2", label: "Views redesigned: Summary and Transcription" },
+                { value: "2", label: "Stakeholder interviews" },
+              ]}
+            />
+          </section>
+
+          <section>
+            <Kicker>Try the prototype</Kicker>
             <FigmaEmbed
               fileKey="sSPEp6OTLlFkzOQc11lA2k"
               fileName="AudioCodes Meeting Insights"
@@ -55,7 +80,7 @@ export default function AudioCodesPage() {
                 {
                   label: "Scope",
                   description:
-                    "A focused redesign of the product's main meeting-insights screen — navigation and the transcription layout.",
+                    "A focused redesign of the product's main meeting-insights screen: navigation and the transcription layout.",
                 },
                 {
                   label: "Approach",

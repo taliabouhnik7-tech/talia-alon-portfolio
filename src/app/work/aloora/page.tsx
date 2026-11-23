@@ -10,9 +10,9 @@ import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
 
 export const metadata: Metadata = {
-  title: "ALOORA — Luxury Jewelry E-commerce | Talia Alon",
+  title: "ALOORA: Luxury Jewelry E-commerce | Talia Alon",
   description:
-    "A premium jewelry e-commerce experience across web and mobile — where digital convenience meets boutique luxury.",
+    "A premium jewelry e-commerce experience across web and mobile, where digital convenience meets boutique luxury.",
 };
 
 export default function AlooraPage() {
@@ -46,7 +46,7 @@ export default function AlooraPage() {
             <Kicker>Pain points &amp; decisions</Kicker>
             <ProblemDecision
               title="1. Trust gap in high-value online purchases"
-              problem={`"Is it real?" — anxiety about lab-grown vs. natural stones.`}
+              problem={`"Is it real?" Anxiety about lab-grown vs. natural stones.`}
               decision="Featured international certification badges (GIA/IGI) directly on the homepage for instant credibility."
             />
             <ProblemDecision
@@ -65,7 +65,7 @@ export default function AlooraPage() {
             <Kicker>Why</Kicker>
             <PullQuote>
               Each solution traces back to a specific moment of hesitation
-              Maya would hit while shopping — the goal wasn&apos;t generic
+              Maya would hit while shopping. The goal wasn&apos;t generic
               &quot;luxury visuals,&quot; it was removing the exact
               frictions that make someone abandon an expensive purchase.
             </PullQuote>

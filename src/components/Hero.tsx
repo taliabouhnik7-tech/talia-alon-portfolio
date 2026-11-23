@@ -3,11 +3,7 @@ export default function Hero() {
     <section id="top" className="mx-auto w-full max-w-[1200px] px-5 pt-14 pb-12 sm:px-8 sm:pt-20 sm:pb-16">
       <div className="flex flex-col gap-8">
         <div>
-          <p className="flex items-center gap-2.5 text-[15px] text-graphite-soft">
-            <span className="h-2 w-2 rounded-full bg-[#2f9e5b]" />
-            Open to UX/UI roles
-          </p>
-          <h1 className="mt-5 text-[56px] leading-[0.95] font-semibold tracking-[-0.045em] text-graphite sm:text-[88px] lg:text-[112px]">
+          <h1 className="text-[56px] leading-[0.95] font-semibold tracking-[-0.045em] text-graphite sm:text-[88px] lg:text-[112px]">
             Talia Alon
           </h1>
           <p className="mt-3 text-[26px] leading-tight font-medium tracking-[-0.025em] text-graphite-soft sm:text-[34px]">

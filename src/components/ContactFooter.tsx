@@ -1,7 +1,7 @@
 const links = [
   { label: "Email", value: "taliabouhnik7@gmail.com", href: "mailto:taliabouhnik7@gmail.com" },
   { label: "Phone", value: "058-666-6623", href: "tel:+972586666623" },
-  { label: "LinkedIn", value: "Talia Bouhnik", href: "https://www.linkedin.com/in/talia-bouhnik-091196412", external: true },
+  { label: "LinkedIn", value: "View profile", href: "https://www.linkedin.com/in/talia-bouhnik-091196412", external: true },
   { label: "Behance", value: "behance.net/5dec536b", href: "https://www.behance.net/5dec536b", external: true },
   { label: "CV", value: "Download PDF", href: "/cv/Talia_Alon_CV.pdf", external: true },
 ];

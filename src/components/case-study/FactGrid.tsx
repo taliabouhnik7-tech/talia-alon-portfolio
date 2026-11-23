@@ -14,7 +14,7 @@ export default function FactGrid({ facts }: { facts: Fact[] }) {
             <p className="text-[14px] font-medium text-graphite">
               {fact.label}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-secondary sm:text-base">
+            <p className="mt-2 text-base leading-relaxed text-ink-secondary sm:text-[17px]">
               {fact.description}
             </p>
           </div>

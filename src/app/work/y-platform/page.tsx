@@ -63,7 +63,7 @@ export default function YPlatformPage() {
               <h3 className="mb-3 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
                 Trust before action
               </h3>
-              <p className="text-sm leading-relaxed text-ink-secondary sm:text-base">
+              <p className="text-base leading-relaxed text-ink-secondary sm:text-[17px]">
                 The homepage deliberately establishes security and trust
                 before asking for any action, because an anxious user needs
                 to feel safe before she&apos;ll commit.
@@ -73,7 +73,7 @@ export default function YPlatformPage() {
               <h3 className="mb-3 text-xl font-semibold tracking-[-0.02em] text-ink sm:text-2xl">
                 Fewer, calmer steps
               </h3>
-              <p className="text-sm leading-relaxed text-ink-secondary sm:text-base">
+              <p className="text-base leading-relaxed text-ink-secondary sm:text-[17px]">
                 User research surfaced that Neta&apos;s impatience meant
                 &quot;three light steps beat one confusing step&quot;:
                 flows were broken into smaller, calmer stages rather than

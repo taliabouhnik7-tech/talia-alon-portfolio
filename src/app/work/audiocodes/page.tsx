@@ -64,6 +64,28 @@ export default function AudioCodesPage() {
           </section>
 
           <section>
+            <Kicker>Before and after</Kicker>
+            <p className="mb-6 text-base leading-relaxed text-ink-secondary sm:text-[17px]">
+              The Summary view, as it was and as redesigned. The large AI
+              warning above the summary became one line under the assistant,
+              the summary got a search field, and the page split into two
+              clear panes: the meeting on the left, its content on the right.
+            </p>
+            <div className="space-y-6">
+              {[
+                { src: "/images/work/audiocodes-before.webp", label: "Before", alt: "The original Meeting Insights summary screen with a large AI warning banner" },
+                { src: "/images/work/audiocodes-after.webp", label: "After", alt: "The redesigned Meeting Insights summary screen with two panes and a search field" },
+              ].map((im) => (
+                <figure key={im.src}>
+                  <figcaption className="mb-2 text-[15px] font-medium text-graphite">{im.label}</figcaption>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={im.src} alt={im.alt} width={1440} height={900} loading="lazy" className="block h-auto w-full rounded-[10px] ring-1 ring-rule" />
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          <section>
             <Kicker>Try the prototype</Kicker>
             <FigmaEmbed
               fileKey="sSPEp6OTLlFkzOQc11lA2k"

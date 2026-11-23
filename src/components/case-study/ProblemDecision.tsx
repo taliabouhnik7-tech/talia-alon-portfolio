@@ -19,7 +19,7 @@ export default function ProblemDecision({
             {title}
           </h3>
         ) : null}
-        <div className="space-y-4 text-sm leading-relaxed sm:text-base">
+        <div className="space-y-4 text-base leading-relaxed sm:text-[17px]">
           <p>
             <span className="font-semibold text-ink">Problem: </span>
             <span className="text-ink-secondary">{problem}</span>

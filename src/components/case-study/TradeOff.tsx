@@ -13,7 +13,7 @@ export default function TradeOff({
         <p className="text-[14px] font-medium text-graphite">
           Honest trade-off
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-ink-secondary sm:text-base">
+        <p className="mt-3 text-base leading-relaxed text-ink-secondary sm:text-[17px]">
           {tension}
         </p>
         <p className="mt-3 text-sm leading-relaxed sm:text-base">

@@ -19,7 +19,7 @@ export default function PersonaCard({
         {meta ? (
           <p className="mt-1 text-sm text-ink-secondary">{meta}</p>
         ) : null}
-        <p className="mt-4 text-sm leading-relaxed text-ink-secondary sm:text-base">
+        <p className="mt-4 text-base leading-relaxed text-ink-secondary sm:text-[17px]">
           {description}
         </p>
       </div>

@@ -96,7 +96,7 @@ export default function BubblePage() {
               {scenarios.map((scenario) => (
                 <li
                   key={scenario}
-                  className="rounded-[12px] bg-canvas p-5 text-sm leading-relaxed text-ink-secondary sm:text-base"
+                  className="rounded-[12px] bg-canvas p-5 text-base leading-relaxed text-ink-secondary sm:text-[17px]"
                 >
                   {scenario}
                 </li>

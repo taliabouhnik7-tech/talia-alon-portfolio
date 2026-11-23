@@ -82,7 +82,7 @@ export default function ChefCoachPage() {
 
           <section>
             <Kicker>Design system</Kicker>
-            <p className="mb-6 text-sm leading-relaxed text-ink-secondary sm:text-base">
+            <p className="mb-6 text-base leading-relaxed text-ink-secondary sm:text-[17px]">
               Pulled directly from the file&apos;s own design-tokens
               documentation and behavior annotations.
             </p>

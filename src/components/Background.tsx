@@ -74,7 +74,7 @@ const steps: Step[] = [
     where: "Talia Alon Bakery",
     title: "Designed and launched my own product",
     body: "An ordering site and admin system for my home bakery. It's live, and real customers order from it.",
-    design: "I know what happens after handoff, because I've been on both sides of it.",
+    design: "Taking a design all the way to a live product showed me what holds up once real customers use it.",
     regions: ["frontal", "parietal", "occipital", "cerebellum", "temporal"],
     regionLabel: "All of it, working together",
   },

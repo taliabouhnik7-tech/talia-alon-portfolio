@@ -50,7 +50,7 @@ const steps: Step[] = [
     body: "Math tutoring for children and teens, on my own and through the PERACH project, then teaching STEM at Technoda.",
     design: "I bring the same habit to user research: listen longer, find the real question, then design.",
     regions: ["temporal", "frontal"],
-    regionLabel: "Language and planning",
+    regionLabel: "Layer 1: words people understand",
   },
   {
     where: "HackerU",
@@ -59,7 +59,7 @@ const steps: Step[] = [
     body: "The full process on solo and team projects: research, personas, user flows, information architecture, wireframes, UI and prototypes.",
     design: "A process I still follow on every project, so nothing gets designed before it's understood.",
     regions: ["occipital", "parietal"],
-    regionLabel: "Visual and spatial processing",
+    regionLabel: "Layer 2: structure and layout",
   },
   {
     where: "Udemy",
@@ -68,7 +68,7 @@ const steps: Step[] = [
     body: "A certificate course in advanced Figma: building reusable components, responsive layouts and interactive prototypes.",
     design: "Organised files a developer can build from, not just screens that look right.",
     regions: ["parietal", "cerebellum"],
-    regionLabel: "Skill built through practice",
+    regionLabel: "Layer 3: components and colour",
   },
   {
     where: "Talia Alon Bakery",
@@ -76,7 +76,7 @@ const steps: Step[] = [
     body: "An ordering site and admin system for my home bakery. It's live, and real customers order from it.",
     design: "Taking a design all the way to a live product showed me what holds up once real customers use it.",
     regions: ["frontal", "parietal", "occipital", "cerebellum", "temporal"],
-    regionLabel: "All of it, working together",
+    regionLabel: "Layer 4: one clear next step",
   },
   {
     where: "Ariel University",
@@ -85,7 +85,7 @@ const steps: Step[] = [
     body: "My current role: coordinating the university's marketing communications.",
     design: "Daily practice in writing for a real audience and working with many people across an organisation.",
     regions: ["temporal", "frontal"],
-    regionLabel: "Language and planning",
+    regionLabel: "Layer 5: messages and feedback",
   },
   {
     where: "Now",
@@ -117,7 +117,7 @@ const VIEWS: Record<Region | "home", [number, number]> = {
 };
 
 const STAGES = [
-  { name: "Layers", text: "Each brain region builds one layer of the screen" },
+  { name: "Layers", text: "Five layers, one from each step" },
   { name: "Interface", text: "The layers come together into one screen" },
   { name: "Interaction", text: "And the interface responds" },
 ];
@@ -156,17 +156,10 @@ const wireRects: R5[] = [[PX, PY, PW, PH, PR], UI.header, UI.card, ...UI.rows, U
 type Layer = { region: number; name: string; area: string; rects: R5[]; circle?: [number, number, number] };
 const [BX, BY, BW, BH] = UI.button;
 const LAYERS: Layer[] = [
-  { region: 1, name: "Layout grid", area: "Spatial attention", rects: wireRects },
-  {
-    region: 3,
-    name: "Hierarchy and colour",
-    area: "Vision",
-    rects: [UI.card, ...UI.rows.map(([x, y]) => [x + 8, y + 7.5, 23, 23, 7] as R5)],
-  },
   {
     region: 2,
     name: "Words",
-    area: "Language",
+    area: "From tutoring",
     rects: [
       [PX + 16, PY + 37, 40, 6, 3],
       [PX + 16, PY + 52, 92, 9, 4],
@@ -174,10 +167,22 @@ const LAYERS: Layer[] = [
       ...UI.rows.flatMap(([x, y]) => [[x + 40, y + 10, 84, 6, 3] as R5, [x + 40, y + 23, 60, 4, 2] as R5]),
     ],
   },
-  { region: 0, name: "One clear next step", area: "Decisions", rects: [UI.button] },
-  { region: 4, name: "Touch and feedback", area: "Coordination", rects: [], circle: [BX + BW * 0.62, BY + BH * 0.6, 16] },
+  { region: 1, name: "Structure", area: "From HackerU", rects: wireRects },
+  {
+    region: 3,
+    name: "Components and colour",
+    area: "From advanced Figma",
+    rects: [UI.card, ...UI.rows.map(([x, y]) => [x + 8, y + 7.5, 23, 23, 7] as R5)],
+  },
+  { region: 0, name: "One clear next step", area: "From shipping the bakery", rects: [UI.button] },
+  {
+    region: 4,
+    name: "Messages and feedback",
+    area: "From marketing communications",
+    rects: [[PX + 14, PY + 12, PW - 28, 30, 10]],
+    circle: [BX + BW * 0.62, BY + BH * 0.6, 16],
+  },
 ];
-const LAYER_OF_REGION = [3, 0, 2, 1, 4, 0]; // stem joins the grid
 
 function layerPoints(layer: Layer, count: number): [number, number][] {
   const segs: [number, number, number, number][] = [];
@@ -211,6 +216,7 @@ function layerPoints(layer: Layer, count: number): [number, number][] {
 
 // Exploded view: e = 1 pulls the layers apart in a tilted stack, e = 0 is the flat phone.
 const PCX = PX + PW / 2, PCY = PY + PH / 2;
+let STACK_N = 5; // how many layers are on the stack right now (smoothed)
 function iso(u: number, v: number, layer: number, e: number): [number, number] {
   const th = 0.78 * e;
   const sc = 1 - 0.38 * e;
@@ -218,7 +224,7 @@ function iso(u: number, v: number, layer: number, e: number): [number, number] {
   const du = u - PCX, dv = v - PCY;
   const x = (du * Math.cos(th) - dv * Math.sin(th)) * sc;
   const y = (du * Math.sin(th) + dv * Math.cos(th)) * sc * sy;
-  return [PCX - 30 * e + x, PCY + 118 * e + y - layer * 58 * e];
+  return [PCX - 30 * e + x, PCY + (STACK_N - 1) * 29 * e + y - layer * 58 * e];
 }
 
 const rand = (i: number, k: number) => {
@@ -263,16 +269,15 @@ function buildGeo(): Geo {
     const sy = g.z[i] * Math.cos(p0) + xr * Math.sin(p0);
     return Math.atan2(-sy, -yr);
   };
-  for (let L = 0; L < LAYERS.length; L++) {
-    const members = Array.from({ length: N }, (_, i) => i).filter((i) => LAYER_OF_REGION[g.reg[i]] === L);
-    if (!members.length) continue;
-    const pts = layerPoints(LAYERS[L], members.length);
-    const a = members.sort((i, j) => ang(i) - ang(j));
+  {
+    const first: Layer = { ...LAYERS[0], rects: [[PX, PY, PW, PH, PR], ...LAYERS[0].rects] };
+    const pts = layerPoints(first, N);
+    const a = Array.from({ length: N }, (_, i) => i).sort((i, j) => ang(i) - ang(j));
     const b = pts.map((_, i) => i).sort((i, j) => Math.atan2(pts[i][1] - PCY, pts[i][0] - PCX) - Math.atan2(pts[j][1] - PCY, pts[j][0] - PCX));
     a.forEach((idx, k) => {
       g.target[idx * 2] = pts[b[k]][0];
       g.target[idx * 2 + 1] = pts[b[k]][1];
-      g.layer[idx] = L;
+      g.layer[idx] = 0;
     });
   }
   for (let i = 0; i < N; i++) g.order[i] = rand(i, 4.1414);
@@ -332,7 +337,7 @@ export default function Background() {
     REGION_CODES.forEach((r) => (regionLit[r] = 0));
     let yaw = VIEWS.home[0], pitch = VIEWS.home[1];
     let u = 0; // smoothed position along the path, in waypoints
-    let morph = 0, form = 0;
+    let morph = 0, form = 0, build = 0;
     let lastActive = -2, lastStage = -2;
     let frame = 0, running = false;
     let prevT = performance.now();
@@ -419,9 +424,16 @@ export default function Background() {
         nodeK[i] += (t - nodeK[i]) * k;
       }
 
-      const target = clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
-      morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 7));
-      const st = morph < 0.02 ? -1 : morph < 0.46 ? 0 : morph < 0.8 ? 1 : 2;
+      // build: how many steps have been read (0..7). Each step adds one layer.
+      let goalB = 0;
+      for (let i = 0; i < steps.length - 1; i++) {
+        const r = els[i]!.getBoundingClientRect();
+        goalB += clamp((vh * 0.55 - r.top) / r.height);
+      }
+      goalB += clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
+      build += (goalB - build) * (reduce ? 1 : 1 - Math.exp(-dt * 6));
+      morph = clamp(build - (steps.length - 1));
+      const st = build < steps.length - 1.02 ? -1 : morph < 0.3 ? 0 : morph < 0.66 ? 1 : 2;
       if (st !== lastStage) {
         lastStage = st;
         setStage(st);
@@ -474,11 +486,14 @@ export default function Background() {
       };
       const t = now / 1000;
 
-      const s1 = seg(morph, 0, 0.42); // each region's points build its layer
-      const s2 = seg(morph, 0.46, 0.66); // the layers close into one phone
-      const s3 = seg(morph, 0.6, 0.8); // layers -> interface
-      const s4 = seg(morph, 0.8, 1); // interaction
+      const s1 = seg(build, 0.72, 1.35); // the brain's points become the first layer
+      const s2 = seg(morph, 0.1, 0.4); // the layers close into one phone
+      const s3 = seg(morph, 0.35, 0.65); // layers -> interface
+      const s4 = seg(morph, 0.68, 1); // interaction
       const ex = 1 - ease(s2); // how far apart the layers are
+      // each later step drops its layer onto the stack, like adding a topping
+      const app = LAYERS.map((_, L) => (L === 0 ? ease(seg(build, 1.1, 1.45)) : ease(seg(build, L + 1, L + 1.45))));
+      STACK_N = Math.max(1, app.reduce((a, b) => a + b, 0));
       const brainA = 1 - ease(seg(s1, 0.08, 0.55));
 
       // camera: the brain spins a little faster as it dissolves into the phone
@@ -525,7 +540,7 @@ export default function Background() {
         const kk = nodeK[i] * brainA;
         const gyr = 0.3 + 0.7 * g.bri[i];
         const base = (gyr * lightness * 0.8 + rim * 0.32) * (0.25 + 0.75 * form);
-        const alpha = (base + (Math.min(1, 0.4 + kk) * fa * gyr - base) * Math.max(kk, 0) + (0.85 - base) * e) * (1 - 0.55 * ease(seg(s1, 0.7, 1))) * (1 - ease(clamp(s3 * 1.6)));
+        const alpha = (base + (Math.min(1, 0.4 + kk) * fa * gyr - base) * Math.max(kk, 0) + (0.85 - base) * e) * (1 - ease(seg(build, 1.35, 1.9))) * (1 - ease(clamp(s3 * 1.6)));
         if (alpha < 0.02) continue;
         const col = kk > 0.6 ? 2 : kk > 0.15 || e > 0.5 ? 1 : 0;
         buckets[col * 10 + Math.min(9, Math.floor(alpha * 10))].push(i);
@@ -640,7 +655,7 @@ export default function Background() {
       ctx.restore();
 
       /* --- the layers, exploded and then closing --- */
-      const layA = ease(seg(s1, 0.55, 1)) * (1 - ease(clamp(s3 * 1.5)));
+      const layA = 1 - ease(clamp(s3 * 1.5));
       if (layA > 0.01) {
         ctx.save();
         const poly = (pts: [number, number][]) => {
@@ -651,8 +666,12 @@ export default function Background() {
         const quad = (L: number, [x, y, w, h]: R5) => poly([iso(x, y, L, ex), iso(x + w, y, L, ex), iso(x + w, y + h, L, ex), iso(x, y + h, L, ex)]);
         LAYERS.forEach((layer, L) => {
           // each layer arrives a little after the one below it
-          const la = layA * ease(seg(s1, 0.55 + L * 0.06, 0.8 + L * 0.04));
+          const la = layA * app[L];
           if (la < 0.01) return;
+          // a new layer drops in from above and settles on the stack
+          const drop = (1 - app[L]) * 70 * ex;
+          ctx.save();
+          ctx.translate(0, -drop * s);
           ctx.globalAlpha = la;
           // the plate every layer sits on
           quad(L, [PX, PY, PW, PH, PR]);
@@ -661,7 +680,7 @@ export default function Background() {
           ctx.strokeStyle = rgba(GLOW, 0.22 * ex + 0.08);
           ctx.lineWidth = 1;
           ctx.stroke();
-          if (L === 0) {
+          if (L === 1) {
             ctx.setLineDash([4, 3]);
             ctx.strokeStyle = rgba(GLOW, 0.75);
             for (const r of wireRects.slice(1)) {
@@ -675,7 +694,7 @@ export default function Background() {
               ctx.strokeStyle = rgba(GLOW, 0.14);
               ctx.stroke();
             }
-          } else if (L === 1) {
+          } else if (L === 2) {
             quad(L, UI.card);
             ctx.fillStyle = rgba(GLOW, 0.85);
             ctx.fill();
@@ -685,7 +704,7 @@ export default function Background() {
               ctx.fillStyle = rgba(tones[k], 0.8);
               ctx.fill();
             });
-          } else if (L === 2) {
+          } else if (L === 0) {
             ctx.fillStyle = rgba(TEXT, 0.85);
             for (const r of layer.rects) {
               quad(L, r);
@@ -696,6 +715,16 @@ export default function Background() {
             ctx.fillStyle = rgba(TEXT, 0.95);
             ctx.fill();
           } else if (layer.circle) {
+            const [tx0, ty0, tw0, th0] = layer.rects[0];
+            quad(L, layer.rects[0]);
+            ctx.fillStyle = rgba(TEXT, 0.9);
+            ctx.fill();
+            poly(Array.from({ length: 16 }, (_, k) => iso(tx0 + 16 + Math.cos((k / 16) * Math.PI * 2) * 6, ty0 + th0 / 2 + Math.sin((k / 16) * Math.PI * 2) * 6, L, ex)));
+            ctx.fillStyle = "rgba(47,158,91,1)";
+            ctx.fill();
+            quad(L, [tx0 + 28, ty0 + th0 / 2 - 2.5, tw0 * 0.45, 5, 2]);
+            ctx.fillStyle = rgba([13, 18, 32], 0.6);
+            ctx.fill();
             const [cx, cy, r] = layer.circle;
             for (const [rr, al] of [[r * 1.6, 0.25], [r, 0.55], [r * 0.45, 1]] as [number, number][]) {
               poly(Array.from({ length: 28 }, (_, k) => iso(cx + Math.cos((k / 28) * Math.PI * 2) * rr, cy + Math.sin((k / 28) * Math.PI * 2) * rr, L, ex)));
@@ -722,6 +751,7 @@ export default function Background() {
             txt(layer.name, lx + 32, ly - 6, 10.5, 600, rgba(TEXT, 0.95));
             txt(layer.area, lx + 32, ly + 8, 9.5, 500, rgba(HOT, 0.9));
           }
+          ctx.restore();
         });
         ctx.restore();
       }

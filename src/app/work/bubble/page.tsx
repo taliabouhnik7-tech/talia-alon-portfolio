@@ -31,6 +31,7 @@ export default function BubblePage() {
           kicker="Case Study · Team · UX/UI"
           title="Bubble — Social Networking App"
           tagline={`"מחברים בין ישראלים לפי מיקומם": connecting Israelis abroad by location.`}
+          context="Team project, four members."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

@@ -8,10 +8,12 @@ export default function CaseStudyHeader({
   kicker,
   title,
   tagline,
+  context,
 }: {
   kicker: string;
   title: string;
   tagline?: string;
+  context?: string;
 }) {
   const tags = kicker
     .split("·")
@@ -35,6 +37,11 @@ export default function CaseStudyHeader({
       {subtitle ? (
         <p className="mt-3 text-[22px] leading-snug tracking-[-0.015em] text-graphite-soft sm:text-[26px]">
           {subtitle.charAt(0).toUpperCase() + subtitle.slice(1)}
+        </p>
+      ) : null}
+      {context ? (
+        <p className="mt-6 max-w-[62ch] border-l-2 border-select pl-4 text-base leading-[1.6] text-graphite">
+          {context}
         </p>
       ) : null}
       {tagline ? <p className="mt-4 max-w-[60ch] text-lg leading-[1.6] text-graphite-soft">{tagline}</p> : null}

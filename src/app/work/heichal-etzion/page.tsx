@@ -21,6 +21,7 @@ export default function HeichalEtzionPage() {
         <CaseStudyHeader
           kicker="Case Study · Solo · Real-Client Donation Landing Page"
           title="Heichal Etzion"
+          context="Built for a real client: a synagogue's renovation fundraising campaign."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

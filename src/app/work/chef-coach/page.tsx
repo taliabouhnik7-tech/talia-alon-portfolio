@@ -22,6 +22,7 @@ export default function ChefCoachPage() {
         <CaseStudyHeader
           kicker="Case Study · Solo · AI Coaching Platform"
           title="Chef Coach"
+          context="Solo project. The screen layout came out of a stakeholder interview."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

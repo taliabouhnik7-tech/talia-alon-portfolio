@@ -25,6 +25,7 @@ export default function YPlatformPage() {
           kicker="Case Study · Solo · EdTech · UX/UI + Branding"
           title="Y — Math Learning Platform"
           tagline={`"הופכים את המתמטיקה לפשוטה ושמים סוף לתסכול": making math simple and ending the frustration.`}
+          context="Solo project: flows, catalogue, interface and the full brand."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
@@ -85,7 +86,7 @@ export default function YPlatformPage() {
           <section>
             <Kicker>A real design tension</Kicker>
             <TradeOff
-              tension={`The team considered a daily streak mechanic for motivation, then flagged it explicitly as a risk: "a streak mechanism can create motivation, but also pressure and guilt. For an anxious user, it could drive her away."`}
+              tension={`I considered a daily streak mechanic for motivation, then flagged it myself as a risk: "a streak mechanism can create motivation, but also pressure and guilt. For an anxious user, it could drive her away."`}
               resolution="Recognition without punishment. The system quietly remembers where she left off, instead of showing a 'broken streak.'"
             />
           </section>

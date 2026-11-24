@@ -22,6 +22,7 @@ export default function TangledPage() {
           kicker="Case Study · Team · Creative Microsite"
           title="Tangled Fan Experience"
           tagline="A movie-themed microsite tying nostalgia for Tangled to a real cause."
+          context="Team project, four members."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

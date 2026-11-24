@@ -19,7 +19,9 @@ export default function SparkPage() {
     <>
       <Nav />
       <main className="flex-1">
-        <CaseStudyHeader kicker="Case Study · Solo · Mobile App · AI Product" title="SPARK — an AI-powered micro-learning app" />
+        <CaseStudyHeader kicker="Case Study · Solo · Mobile App · AI Product" title="SPARK — an AI-powered micro-learning app"
+          context="Solo concept project."
+        />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
           <MockupCover src="/images/work/spark-cover.webp" alt="SPARK app screens: onboarding, discovery, video feed and profile" priority fit="cover" />

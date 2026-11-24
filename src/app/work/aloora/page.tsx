@@ -24,6 +24,7 @@ export default function AlooraPage() {
           kicker="Case Study · Team · Web & Mobile"
           title="ALOORA — Luxury Jewelry E-commerce"
           tagline="Where Digital Convenience Meets Boutique Luxury."
+          context="Team project, four members."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

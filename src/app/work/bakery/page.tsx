@@ -5,6 +5,7 @@ import CaseStudyHeader from "@/components/case-study/CaseStudyHeader";
 import MockupCover from "@/components/case-study/MockupCover";
 import PullQuote from "@/components/case-study/PullQuote";
 import Kicker from "@/components/Kicker";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Talia Alon Bakery | Talia Alon",
@@ -18,6 +19,7 @@ type Moment = {
   problem: string;
   decision: string;
   why: string;
+  shot?: { src: string; w: number; h: number; alt: string; caption: string };
 };
 
 const moments: Moment[] = [
@@ -29,6 +31,7 @@ const moments: Moment[] = [
     decision:
       "Kept the filled pill on mobile. On desktop, gave it an outlined treatment that matches the site's other buttons, with a filled state only when a category is active.",
     why: "The two versions needed to feel like the same product, not identical controls. Each one native to how people actually tap or click at that size.",
+    shot: { src: "/images/work/bakery/tabs.webp", w: 448, h: 190, alt: "Mobile category switcher with the active category filled in", caption: "On mobile, the filled pill marks the active category." },
   },
   {
     number: "02",
@@ -38,6 +41,7 @@ const moments: Moment[] = [
     decision:
       "Rebuilt it as a single CSS gradient locked to exactly seven equal-width stripes at any screen size. An odd count so the strong brand color always lands on both outer edges.",
     why: "A pattern that shifts density with viewport width reads as accidental. One that holds its rhythm at every size reads as designed.",
+    shot: { src: "/images/work/bakery/stripes.webp", w: 448, h: 340, alt: "Header with seven equal yellow and cream stripes behind the logo", caption: "Seven stripes at every width, brand colour on both edges." },
   },
   {
     number: "03",
@@ -47,6 +51,7 @@ const moments: Moment[] = [
     decision:
       "Rebuilt the hierarchy so price is the dominant element in every row, the product name reads clearly but secondary, and the quantity/remove controls pull back to a quiet, outlined style.",
     why: "The price is what a customer checks twice before sending an order. Everything else in the row should support that glance, not compete with it.",
+    shot: { src: "/images/work/bakery/summary.webp", w: 448, h: 524, alt: "Order summary listing two items with prices and a total of 140 shekels", caption: "The order summary. Orders are sent on WhatsApp." },
   },
   {
     number: "04",
@@ -56,6 +61,7 @@ const moments: Moment[] = [
     decision:
       "Designed a two-state control: a small, quiet count badge at rest, which expands into a compact +/- stepper on demand and collapses again once you're done.",
     why: "The interaction only earns visual prominence at the moment someone is actually using it. The rest of the time, it should read as information, not an invitation to act.",
+    shot: { src: "/images/work/bakery/stepper.webp", w: 448, h: 273, alt: "A product with an open quantity stepper above a product with an Add to cart button", caption: "Top: the stepper in use. Below: the resting state." },
   },
   {
     number: "05",
@@ -76,6 +82,7 @@ export default function BakeryPage() {
         <CaseStudyHeader
           kicker="Case Study · Solo · Personal Business · Live Product"
           title="Talia Alon Bakery — ordering site & admin system"
+          context="My own home bakery. I designed the site and the admin, took it live, and customers order from it."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
@@ -153,6 +160,7 @@ export default function BakeryPage() {
                 key={moment.number}
                 className="rounded-[12px] bg-canvas p-6 sm:p-8"
               >
+                <div className={moment.shot ? "grid gap-6 md:grid-cols-[1fr_260px] md:gap-8" : undefined}>
                 <div>
                   <p className="text-[15px] font-medium tabular-nums text-accent">
                     {moment.number}
@@ -182,6 +190,22 @@ export default function BakeryPage() {
                       <span className="text-ink-secondary">{moment.why}</span>
                     </p>
                   </div>
+                </div>
+                {moment.shot ? (
+                  <figure className="self-start">
+                    <Image
+                      src={moment.shot.src}
+                      width={moment.shot.w}
+                      height={moment.shot.h}
+                      alt={moment.shot.alt}
+                      sizes="260px"
+                      className="block h-auto w-full max-w-[300px] rounded-[10px] border border-border"
+                    />
+                    <figcaption className="mt-2 text-sm leading-snug text-ink-secondary">
+                      {moment.shot.caption}
+                    </figcaption>
+                  </figure>
+                ) : null}
                 </div>
               </div>
             ))}

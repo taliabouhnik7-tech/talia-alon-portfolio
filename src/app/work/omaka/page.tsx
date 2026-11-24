@@ -19,7 +19,9 @@ export default function OmakaPage() {
     <>
       <Nav />
       <main className="flex-1">
-        <CaseStudyHeader kicker="Case Study · Solo · Branding · Brand Book" title="OMAKA — brand book" />
+        <CaseStudyHeader kicker="Case Study · Solo · Branding · Brand Book" title="OMAKA — brand book"
+          context="Solo brand identity project."
+        />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">
           {/* eslint-disable-next-line @next/next/no-img-element */}

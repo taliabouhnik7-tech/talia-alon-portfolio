@@ -22,6 +22,7 @@ export default function AudioCodesPage() {
         <CaseStudyHeader
           kicker="Case Study · Solo · Enterprise SaaS Redesign"
           title="AudioCodes Meeting Insights"
+          context="A redesign of an existing product, based on interviews with two people who build it: its UI lead and a frontend developer."
         />
 
         <div className="mx-auto max-w-4xl space-y-14 px-5 py-12 sm:px-8 sm:py-16">

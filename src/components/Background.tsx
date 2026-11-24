@@ -117,8 +117,8 @@ const VIEWS: Record<Region | "home", [number, number]> = {
 };
 
 const STAGES = [
-  { name: "Wireframe", text: "The same points reshape into a wireframe" },
-  { name: "Interface", text: "The wireframe becomes an interface" },
+  { name: "Layers", text: "Each brain region builds one layer of the screen" },
+  { name: "Interface", text: "The layers come together into one screen" },
   { name: "Interaction", text: "And the interface responds" },
 ];
 
@@ -134,7 +134,7 @@ type Geo = {
   reg: Uint8Array; bri: Float32Array;
   nx: Float32Array; ny: Float32Array; nz: Float32Array;
   dx: Float32Array; dy: Float32Array; dz: Float32Array;
-  hubDist: Float32Array; target: Float32Array; order: Float32Array;
+  hubDist: Float32Array; target: Float32Array; order: Float32Array; layer: Uint8Array;
 };
 
 // Phone, in the same 610 x 440 drawing space.
@@ -148,17 +148,57 @@ const UI = {
 };
 const wireRects: R5[] = [[PX, PY, PW, PH, PR], UI.header, UI.card, ...UI.rows, UI.button];
 
-function perimeterPoints(count: number) {
+/*
+ * The phone, pulled apart into the layers people process, each built by the
+ * brain region that reads it. Bottom to top: layout, visuals, words, the
+ * main decision, and the touch that acts on it.
+ */
+type Layer = { region: number; name: string; area: string; rects: R5[]; circle?: [number, number, number] };
+const [BX, BY, BW, BH] = UI.button;
+const LAYERS: Layer[] = [
+  { region: 1, name: "Layout grid", area: "Spatial attention", rects: wireRects },
+  {
+    region: 3,
+    name: "Hierarchy and colour",
+    area: "Vision",
+    rects: [UI.card, ...UI.rows.map(([x, y]) => [x + 8, y + 7.5, 23, 23, 7] as R5)],
+  },
+  {
+    region: 2,
+    name: "Words",
+    area: "Language",
+    rects: [
+      [PX + 16, PY + 37, 40, 6, 3],
+      [PX + 16, PY + 52, 92, 9, 4],
+      [UI.card[0] + 14, UI.card[1] + 30, 110, 9, 4],
+      ...UI.rows.flatMap(([x, y]) => [[x + 40, y + 10, 84, 6, 3] as R5, [x + 40, y + 23, 60, 4, 2] as R5]),
+    ],
+  },
+  { region: 0, name: "One clear next step", area: "Decisions", rects: [UI.button] },
+  { region: 4, name: "Touch and feedback", area: "Coordination", rects: [], circle: [BX + BW * 0.62, BY + BH * 0.6, 16] },
+];
+const LAYER_OF_REGION = [3, 0, 2, 1, 4, 0]; // stem joins the grid
+
+function layerPoints(layer: Layer, count: number): [number, number][] {
   const segs: [number, number, number, number][] = [];
-  for (const [x, y, w, h] of wireRects) segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]);
+  for (const [x, y, w, h] of layer.rects) segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]);
+  if (layer.circle) {
+    const [cx, cy, r] = layer.circle;
+    for (const rr of [r, r * 0.55, r * 1.6]) {
+      for (let k = 0; k < 24; k++) {
+        const a0 = (k / 24) * Math.PI * 2, a1 = ((k + 1) / 24) * Math.PI * 2;
+        segs.push([cx + Math.cos(a0) * rr, cy + Math.sin(a0) * rr, cx + Math.cos(a1) * rr, cy + Math.sin(a1) * rr]);
+      }
+    }
+  }
   const lens = segs.map(([a, b, c, d]) => Math.hypot(c - a, d - b));
   const total = lens.reduce((a, b) => a + b, 0);
   const out: [number, number][] = [];
   for (let k = 0; k < count; k++) {
     let t = ((k + 0.5) / count) * total;
     for (let i = 0; i < segs.length; i++) {
-      if (t <= lens[i]) {
-        const f = t / lens[i];
+      if (t <= lens[i] || i === segs.length - 1) {
+        const f = Math.min(1, t / lens[i]);
         const [a, b, c, d] = segs[i];
         out.push([a + (c - a) * f, b + (d - b) * f]);
         break;
@@ -167,6 +207,18 @@ function perimeterPoints(count: number) {
     }
   }
   return out;
+}
+
+// Exploded view: e = 1 pulls the layers apart in a tilted stack, e = 0 is the flat phone.
+const PCX = PX + PW / 2, PCY = PY + PH / 2;
+function iso(u: number, v: number, layer: number, e: number): [number, number] {
+  const th = 0.78 * e;
+  const sc = 1 - 0.38 * e;
+  const sy = 1 - 0.56 * e;
+  const du = u - PCX, dv = v - PCY;
+  const x = (du * Math.cos(th) - dv * Math.sin(th)) * sc;
+  const y = (du * Math.sin(th) + dv * Math.cos(th)) * sc * sy;
+  return [PCX - 30 * e + x, PCY + 118 * e + y - layer * 58 * e];
 }
 
 const rand = (i: number, k: number) => {
@@ -181,7 +233,7 @@ function buildGeo(): Geo {
     reg: new Uint8Array(N), bri: new Float32Array(N),
     nx: new Float32Array(N), ny: new Float32Array(N), nz: new Float32Array(N),
     dx: new Float32Array(N), dy: new Float32Array(N), dz: new Float32Array(N),
-    hubDist: new Float32Array(N), target: new Float32Array(N * 2), order: new Float32Array(N),
+    hubDist: new Float32Array(N), target: new Float32Array(N * 2), order: new Float32Array(N), layer: new Uint8Array(N),
   };
   for (let i = 0; i < N; i++) {
     const o = i * 8;
@@ -202,9 +254,8 @@ function buildGeo(): Geo {
     const h = HUBS[REGION_CODES[g.reg[i]] as keyof typeof HUBS];
     g.hubDist[i] = h === undefined ? 999 : Math.hypot(g.x[i] - g.x[h], g.y[i] - g.y[h], g.z[i] - g.z[h]);
   }
-  // Brain-to-phone: match points to the wireframe by angle in the home view,
-  // so the shape flows into the phone instead of scrambling.
-  const wire = perimeterPoints(N);
+  // Brain-to-phone: each region's points go to its own layer, matched by
+  // angle so every region flows into its layer instead of scrambling.
   const [a0, p0] = VIEWS.home;
   const ang = (i: number) => {
     const xr = g.x[i] * Math.cos(a0) - g.y[i] * Math.sin(a0);
@@ -212,14 +263,19 @@ function buildGeo(): Geo {
     const sy = g.z[i] * Math.cos(p0) + xr * Math.sin(p0);
     return Math.atan2(-sy, -yr);
   };
-  const a = Array.from({ length: N }, (_, i) => i).sort((i, j) => ang(i) - ang(j));
-  const pc = [PX + PW / 2, PY + PH / 2];
-  const b = wire.map((_, i) => i).sort((i, j) => Math.atan2(wire[i][1] - pc[1], wire[i][0] - pc[0]) - Math.atan2(wire[j][1] - pc[1], wire[j][0] - pc[0]));
-  a.forEach((idx, k) => {
-    g.target[idx * 2] = wire[b[k]][0];
-    g.target[idx * 2 + 1] = wire[b[k]][1];
-    g.order[idx] = rand(idx, 4.1414);
-  });
+  for (let L = 0; L < LAYERS.length; L++) {
+    const members = Array.from({ length: N }, (_, i) => i).filter((i) => LAYER_OF_REGION[g.reg[i]] === L);
+    if (!members.length) continue;
+    const pts = layerPoints(LAYERS[L], members.length);
+    const a = members.sort((i, j) => ang(i) - ang(j));
+    const b = pts.map((_, i) => i).sort((i, j) => Math.atan2(pts[i][1] - PCY, pts[i][0] - PCX) - Math.atan2(pts[j][1] - PCY, pts[j][0] - PCX));
+    a.forEach((idx, k) => {
+      g.target[idx * 2] = pts[b[k]][0];
+      g.target[idx * 2 + 1] = pts[b[k]][1];
+      g.layer[idx] = L;
+    });
+  }
+  for (let i = 0; i < N; i++) g.order[i] = rand(i, 4.1414);
   return g;
 }
 
@@ -365,7 +421,7 @@ export default function Background() {
 
       const target = clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
       morph += (target - morph) * (reduce ? 1 : 1 - Math.exp(-dt * 7));
-      const st = morph < 0.02 ? -1 : morph < 0.42 ? 0 : morph < 0.74 ? 1 : 2;
+      const st = morph < 0.02 ? -1 : morph < 0.46 ? 0 : morph < 0.8 ? 1 : 2;
       if (st !== lastStage) {
         lastStage = st;
         setStage(st);
@@ -418,10 +474,12 @@ export default function Background() {
       };
       const t = now / 1000;
 
-      const s1 = seg(morph, 0, 0.42); // points flow into the wireframe
-      const s3 = seg(morph, 0.4, 0.72); // wireframe -> interface
-      const s4 = seg(morph, 0.74, 1); // interaction
-      const brainA = 1 - ease(clamp(s1 * 2));
+      const s1 = seg(morph, 0, 0.42); // each region's points build its layer
+      const s2 = seg(morph, 0.46, 0.66); // the layers close into one phone
+      const s3 = seg(morph, 0.6, 0.8); // layers -> interface
+      const s4 = seg(morph, 0.8, 1); // interaction
+      const ex = 1 - ease(s2); // how far apart the layers are
+      const brainA = 1 - ease(seg(s1, 0.08, 0.55));
 
       // camera: the brain spins a little faster as it dissolves into the phone
       const a = yaw + ease(s1) * 1.4;
@@ -449,8 +507,9 @@ export default function Background() {
         let e = 0;
         if (s1 > 0) {
           e = ease(clamp(s1 * 1.35 - g.order[i] * 0.35));
-          qx += (g.target[i * 2] - qx) * e;
-          qy += (g.target[i * 2 + 1] - qy) * e;
+          const [tx, ty] = iso(g.target[i * 2], g.target[i * 2 + 1], g.layer[i], ex);
+          qx += (tx - qx) * e;
+          qy += (ty - qy) * e;
         }
         me[i] = e;
         sx[i] = X(qx);
@@ -466,7 +525,7 @@ export default function Background() {
         const kk = nodeK[i] * brainA;
         const gyr = 0.3 + 0.7 * g.bri[i];
         const base = (gyr * lightness * 0.8 + rim * 0.32) * (0.25 + 0.75 * form);
-        const alpha = (base + (Math.min(1, 0.4 + kk) * fa * gyr - base) * Math.max(kk, 0) + (0.85 - base) * e) * (1 - ease(clamp(s3 * 1.6)));
+        const alpha = (base + (Math.min(1, 0.4 + kk) * fa * gyr - base) * Math.max(kk, 0) + (0.85 - base) * e) * (1 - 0.55 * ease(seg(s1, 0.7, 1))) * (1 - ease(clamp(s3 * 1.6)));
         if (alpha < 0.02) continue;
         const col = kk > 0.6 ? 2 : kk > 0.15 || e > 0.5 ? 1 : 0;
         buckets[col * 10 + Math.min(9, Math.floor(alpha * 10))].push(i);
@@ -580,32 +639,90 @@ export default function Background() {
       }
       ctx.restore();
 
-      /* --- wireframe --- */
-      const wireA = Math.min(ease(seg(s1, 0.55, 1)), 1 - ease(clamp(s3 * 1.4)));
-      if (wireA > 0.01) {
+      /* --- the layers, exploded and then closing --- */
+      const layA = ease(seg(s1, 0.55, 1)) * (1 - ease(clamp(s3 * 1.5)));
+      if (layA > 0.01) {
         ctx.save();
-        ctx.globalAlpha = wireA;
-        ctx.lineWidth = 1.1;
-        ctx.strokeStyle = rgba(GLOW, 0.9);
-        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
-        ctx.stroke();
-        ctx.setLineDash([4, 3]);
-        ctx.strokeStyle = rgba(GLOW, 0.6);
-        ctx.fillStyle = rgba(GLOW, 0.05);
-        for (const [x, y, rw, rh, r] of wireRects.slice(1)) {
-          roundRect(X(x), Y(y), rw * s, rh * s, r * s);
+        const poly = (pts: [number, number][]) => {
+          ctx.beginPath();
+          pts.forEach(([x, y], k) => (k ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))));
+          ctx.closePath();
+        };
+        const quad = (L: number, [x, y, w, h]: R5) => poly([iso(x, y, L, ex), iso(x + w, y, L, ex), iso(x + w, y + h, L, ex), iso(x, y + h, L, ex)]);
+        LAYERS.forEach((layer, L) => {
+          // each layer arrives a little after the one below it
+          const la = layA * ease(seg(s1, 0.55 + L * 0.06, 0.8 + L * 0.04));
+          if (la < 0.01) return;
+          ctx.globalAlpha = la;
+          // the plate every layer sits on
+          quad(L, [PX, PY, PW, PH, PR]);
+          ctx.fillStyle = rgba(GLOW, 0.035 + 0.03 * ex);
           ctx.fill();
+          ctx.strokeStyle = rgba(GLOW, 0.22 * ex + 0.08);
+          ctx.lineWidth = 1;
           ctx.stroke();
-        }
-        ctx.setLineDash([]);
-        const [cx, cy, cw2, ch] = UI.card;
-        ctx.beginPath();
-        ctx.moveTo(X(cx), Y(cy));
-        ctx.lineTo(X(cx + cw2), Y(cy + ch));
-        ctx.moveTo(X(cx + cw2), Y(cy));
-        ctx.lineTo(X(cx), Y(cy + ch));
-        ctx.strokeStyle = rgba(GLOW, 0.25);
-        ctx.stroke();
+          if (L === 0) {
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = rgba(GLOW, 0.75);
+            for (const r of wireRects.slice(1)) {
+              quad(L, r);
+              ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            for (let c = 1; c < 4; c++) {
+              const gx = PX + (PW / 4) * c;
+              poly([iso(gx, PY + 10, L, ex), iso(gx, PY + PH - 10, L, ex)]);
+              ctx.strokeStyle = rgba(GLOW, 0.14);
+              ctx.stroke();
+            }
+          } else if (L === 1) {
+            quad(L, UI.card);
+            ctx.fillStyle = rgba(GLOW, 0.85);
+            ctx.fill();
+            const tones: RGB[] = [GLOW, [240, 170, 80], [80, 200, 130]];
+            layer.rects.slice(1).forEach((r, k) => {
+              quad(L, r);
+              ctx.fillStyle = rgba(tones[k], 0.8);
+              ctx.fill();
+            });
+          } else if (L === 2) {
+            ctx.fillStyle = rgba(TEXT, 0.85);
+            for (const r of layer.rects) {
+              quad(L, r);
+              ctx.fill();
+            }
+          } else if (L === 3) {
+            quad(L, UI.button);
+            ctx.fillStyle = rgba(TEXT, 0.95);
+            ctx.fill();
+          } else if (layer.circle) {
+            const [cx, cy, r] = layer.circle;
+            for (const [rr, al] of [[r * 1.6, 0.25], [r, 0.55], [r * 0.45, 1]] as [number, number][]) {
+              poly(Array.from({ length: 28 }, (_, k) => iso(cx + Math.cos((k / 28) * Math.PI * 2) * rr, cy + Math.sin((k / 28) * Math.PI * 2) * rr, L, ex)));
+              if (rr < r) {
+                ctx.fillStyle = rgba(HOT, al);
+                ctx.fill();
+              } else {
+                ctx.strokeStyle = rgba(HOT, al);
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
+              }
+            }
+          }
+          // label: what the layer is, and which region builds it
+          if (ex > 0.05 && w > 420) {
+            const [lx, ly] = iso(PX + PW, PY, L, ex);
+            ctx.globalAlpha = la * ease(clamp(ex * 1.4 - 0.2));
+            ctx.strokeStyle = rgba(GLOW, 0.5);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(X(lx + 6), Y(ly));
+            ctx.lineTo(X(lx + 26), Y(ly));
+            ctx.stroke();
+            txt(layer.name, lx + 32, ly - 6, 10.5, 600, rgba(TEXT, 0.95));
+            txt(layer.area, lx + 32, ly + 8, 9.5, 500, rgba(HOT, 0.9));
+          }
+        });
         ctx.restore();
       }
 

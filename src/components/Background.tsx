@@ -1,27 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HUBS, POINTS_B64, POINT_COUNT, REGION_CODES } from "@/data/brain3d";
 
 /*
- * Background: the CV, told as a path through the brain.
+ * Background: the CV as a walk.
  *
- * The brain is a real one: points sampled from the fsaverage cortical surface,
- * an average of real MRI scans, with lobes split along the standard
- * landmarks. As the reader scrolls through each step of the timeline, the
- * brain turns to the regions that step trained, lights them, and draws a
- * signal path between them. On the last step the same points flow into a
- * phone and become an interface: how people think, turned into what they use.
+ * A girl walks a winding path down the page as the reader scrolls. Each turn
+ * of the path is one step of the CV, and at each one she stops and uses her
+ * phone. The screens get simpler and clearer from stop to stop, and she gets
+ * each task right away: the point of the section is shown, not told. A child
+ * can use what I design.
  */
 
-type Region = (typeof REGION_CODES)[number];
 type RGB = [number, number, number];
-
 const GLOW: RGB = [93, 142, 255];
 const HOT: RGB = [168, 210, 255];
-const DIM: RGB = [86, 112, 168];
 const TEXT: RGB = [232, 236, 244];
+const GREEN: RGB = [47, 170, 100];
+const WARM: RGB = [240, 170, 80];
 const SCREEN = "#0d1220";
+const ROW = "#161d2c";
 
 type Step = {
   where: string;
@@ -29,8 +27,7 @@ type Step = {
   title: string;
   body: string;
   design: string;
-  regions: Region[]; // in the order the signal travels
-  regionLabel: string;
+  caption: string;
 };
 
 const steps: Step[] = [
@@ -40,8 +37,7 @@ const steps: Step[] = [
     title: "B.Sc. in Cognitive & Brain Sciences, minor in math",
     body: "How people perceive, pay attention, remember and decide, and the research methods behind it: ask a clear question, test it, read the data honestly.",
     design: "Fewer choices per screen, a clear visual hierarchy, and decisions backed by evidence rather than taste.",
-    regions: ["occipital", "temporal", "frontal"],
-    regionLabel: "Perception, memory and decision-making",
+    caption: "Too many choices, then one clear one",
   },
   {
     where: "STEM instruction and private tutoring",
@@ -49,8 +45,7 @@ const steps: Step[] = [
     title: "Teaching math and science",
     body: "Math tutoring for children and teens, on my own and through the PERACH project, then teaching STEM at Technoda.",
     design: "I bring the same habit to user research: listen longer, find the real question, then design.",
-    regions: ["temporal", "frontal"],
-    regionLabel: "Layer 1: words people understand",
+    caption: "Listening before answering",
   },
   {
     where: "HackerU",
@@ -58,8 +53,7 @@ const steps: Step[] = [
     title: "UX/UI design program",
     body: "The full process on solo and team projects: research, personas, user flows, information architecture, wireframes, UI and prototypes.",
     design: "A process I still follow on every project, so nothing gets designed before it's understood.",
-    regions: ["occipital", "parietal"],
-    regionLabel: "Layer 2: structure and layout",
+    caption: "Structure that is easy to scan",
   },
   {
     where: "Udemy",
@@ -67,16 +61,14 @@ const steps: Step[] = [
     title: "Advanced Figma",
     body: "A certificate course in advanced Figma: building reusable components, responsive layouts and interactive prototypes.",
     design: "Organised files a developer can build from, not just screens that look right.",
-    regions: ["parietal", "cerebellum"],
-    regionLabel: "Layer 3: components and colour",
+    caption: "Pieces that behave the same everywhere",
   },
   {
     where: "Talia Alon Bakery",
     title: "Designed and launched my own product",
     body: "An ordering site and admin system for my home bakery. It's live, and real customers order from it.",
     design: "Taking a design all the way to a live product showed me what holds up once real customers use it.",
-    regions: ["frontal", "parietal", "occipital", "cerebellum", "temporal"],
-    regionLabel: "Layer 4: one clear next step",
+    caption: "Ordering in a few taps",
   },
   {
     where: "Ariel University",
@@ -84,237 +76,45 @@ const steps: Step[] = [
     title: "Marketing communications coordinator",
     body: "My current role: coordinating the university's marketing communications.",
     design: "Daily practice in writing for a real audience and working with many people across an organisation.",
-    regions: ["temporal", "frontal"],
-    regionLabel: "Layer 5: messages and feedback",
+    caption: "A message that is easy to act on",
   },
   {
     where: "Now",
     title: "Looking for my next team",
     body: "Open to UX/UI roles at product companies and UX consultancies.",
     design: "",
-    regions: [],
-    regionLabel: "From how people think to what they use",
+    caption: "Simple enough for anyone",
   },
 ];
-
-const REGION_NAMES: Partial<Record<Region, string>> = {
-  frontal: "Decisions, planning",
-  parietal: "Spatial attention",
-  temporal: "Language, memory",
-  occipital: "Vision",
-  cerebellum: "Coordination, skill",
-};
-
-// Where the camera sits to see each region best: yaw, pitch (radians).
-const VIEWS: Record<Region | "home", [number, number]> = {
-  home: [0.35, 0.12],
-  frontal: [0.8, 0.16],
-  temporal: [0.02, -0.1],
-  parietal: [-0.3, 0.6],
-  occipital: [-1.0, 0.1],
-  cerebellum: [-0.75, -0.38],
-  stem: [0, 0],
-};
-
-const STAGES = [
-  { name: "Layers", text: "Five layers, one from each step" },
-  { name: "Interface", text: "The layers come together into one screen" },
-  { name: "Interaction", text: "And the interface responds" },
-];
-
-/* ---------- geometry, computed once on the client ---------------------- */
-
-const N = POINT_COUNT;
-const CX = 0, CY = -17, CZ = 12; // brain centre, mm
-const K = 2.45; // drawing units per mm
-const BCX = 305, BCY = 222;
-
-type Geo = {
-  x: Float32Array; y: Float32Array; z: Float32Array;
-  reg: Uint8Array; bri: Float32Array;
-  nx: Float32Array; ny: Float32Array; nz: Float32Array;
-  dx: Float32Array; dy: Float32Array; dz: Float32Array;
-  hubDist: Float32Array; target: Float32Array; order: Float32Array; layer: Uint8Array;
-};
-
-// Phone, in the same 610 x 440 drawing space.
-const PX = 210, PY = 20, PW = 190, PH = 400, PR = 30;
-type R5 = [number, number, number, number, number];
-const UI = {
-  header: [PX + 16, PY + 46, 92, 12, 4] as R5,
-  card: [PX + 14, PY + 72, PW - 28, 98, 16] as R5,
-  rows: [0, 1, 2].map((i) => [PX + 14, PY + 196 + i * 46, PW - 28, 38, 12] as R5),
-  button: [PX + 22, PY + PH - 60, PW - 44, 36, 18] as R5,
-};
-const wireRects: R5[] = [[PX, PY, PW, PH, PR], UI.header, UI.card, ...UI.rows, UI.button];
-
-/*
- * The phone, pulled apart into the layers people process, each built by the
- * brain region that reads it. Bottom to top: layout, visuals, words, the
- * main decision, and the touch that acts on it.
- */
-type Layer = { region: number; name: string; area: string; rects: R5[]; circle?: [number, number, number] };
-const [BX, BY, BW, BH] = UI.button;
-const LAYERS: Layer[] = [
-  {
-    region: 2,
-    name: "Words",
-    area: "From tutoring",
-    rects: [
-      [PX + 16, PY + 37, 40, 6, 3],
-      [PX + 16, PY + 52, 92, 9, 4],
-      [UI.card[0] + 14, UI.card[1] + 30, 110, 9, 4],
-      ...UI.rows.flatMap(([x, y]) => [[x + 40, y + 10, 84, 6, 3] as R5, [x + 40, y + 23, 60, 4, 2] as R5]),
-    ],
-  },
-  { region: 1, name: "Structure", area: "From HackerU", rects: wireRects },
-  {
-    region: 3,
-    name: "Components and colour",
-    area: "From advanced Figma",
-    rects: [UI.card, ...UI.rows.map(([x, y]) => [x + 8, y + 7.5, 23, 23, 7] as R5)],
-  },
-  { region: 0, name: "One clear next step", area: "From shipping the bakery", rects: [UI.button] },
-  {
-    region: 4,
-    name: "Messages and feedback",
-    area: "From marketing communications",
-    rects: [[PX + 14, PY + 12, PW - 28, 30, 10]],
-    circle: [BX + BW * 0.62, BY + BH * 0.6, 16],
-  },
-];
-
-function layerPoints(layer: Layer, count: number): [number, number][] {
-  const segs: [number, number, number, number][] = [];
-  for (const [x, y, w, h] of layer.rects) segs.push([x, y, x + w, y], [x + w, y, x + w, y + h], [x + w, y + h, x, y + h], [x, y + h, x, y]);
-  if (layer.circle) {
-    const [cx, cy, r] = layer.circle;
-    for (const rr of [r, r * 0.55, r * 1.6]) {
-      for (let k = 0; k < 24; k++) {
-        const a0 = (k / 24) * Math.PI * 2, a1 = ((k + 1) / 24) * Math.PI * 2;
-        segs.push([cx + Math.cos(a0) * rr, cy + Math.sin(a0) * rr, cx + Math.cos(a1) * rr, cy + Math.sin(a1) * rr]);
-      }
-    }
-  }
-  const lens = segs.map(([a, b, c, d]) => Math.hypot(c - a, d - b));
-  const total = lens.reduce((a, b) => a + b, 0);
-  const out: [number, number][] = [];
-  for (let k = 0; k < count; k++) {
-    let t = ((k + 0.5) / count) * total;
-    for (let i = 0; i < segs.length; i++) {
-      if (t <= lens[i] || i === segs.length - 1) {
-        const f = Math.min(1, t / lens[i]);
-        const [a, b, c, d] = segs[i];
-        out.push([a + (c - a) * f, b + (d - b) * f]);
-        break;
-      }
-      t -= lens[i];
-    }
-  }
-  return out;
-}
-
-// Exploded view: e = 1 pulls the layers apart in a tilted stack, e = 0 is the flat phone.
-const PCX = PX + PW / 2, PCY = PY + PH / 2;
-let STACK_N = 5; // how many layers are on the stack right now (smoothed)
-function iso(u: number, v: number, layer: number, e: number): [number, number] {
-  const th = 0.78 * e;
-  const sc = 1 - 0.38 * e;
-  const sy = 1 - 0.56 * e;
-  const du = u - PCX, dv = v - PCY;
-  const x = (du * Math.cos(th) - dv * Math.sin(th)) * sc;
-  const y = (du * Math.sin(th) + dv * Math.cos(th)) * sc * sy;
-  return [PCX - 30 * e + x, PCY + (STACK_N - 1) * 29 * e + y - layer * 58 * e];
-}
-
-const rand = (i: number, k: number) => {
-  const v = Math.sin(i * k) * 43758.5453;
-  return v - Math.floor(v);
-};
-
-function buildGeo(): Geo {
-  const bin = atob(POINTS_B64);
-  const g: Geo = {
-    x: new Float32Array(N), y: new Float32Array(N), z: new Float32Array(N),
-    reg: new Uint8Array(N), bri: new Float32Array(N),
-    nx: new Float32Array(N), ny: new Float32Array(N), nz: new Float32Array(N),
-    dx: new Float32Array(N), dy: new Float32Array(N), dz: new Float32Array(N),
-    hubDist: new Float32Array(N), target: new Float32Array(N * 2), order: new Float32Array(N), layer: new Uint8Array(N),
-  };
-  for (let i = 0; i < N; i++) {
-    const o = i * 8;
-    g.x[i] = bin.charCodeAt(o) - 128 - CX;
-    g.y[i] = bin.charCodeAt(o + 1) - 128 - CY;
-    g.z[i] = bin.charCodeAt(o + 2) - 128 - CZ;
-    g.reg[i] = bin.charCodeAt(o + 3);
-    g.bri[i] = bin.charCodeAt(o + 4) / 255;
-    g.nx[i] = (bin.charCodeAt(o + 5) - 128) / 127;
-    g.ny[i] = (bin.charCodeAt(o + 6) - 128) / 127;
-    g.nz[i] = (bin.charCodeAt(o + 7) - 128) / 127;
-    // scattered start point the brain assembles from
-    const u = rand(i, 12.9898) * 2 - 1, th = rand(i, 78.233) * Math.PI * 2, r = 150 + rand(i, 37.719) * 110;
-    const s = Math.sqrt(1 - u * u);
-    g.dx[i] = s * Math.cos(th) * r; g.dy[i] = s * Math.sin(th) * r; g.dz[i] = u * r * 0.7;
-  }
-  for (let i = 0; i < N; i++) {
-    const h = HUBS[REGION_CODES[g.reg[i]] as keyof typeof HUBS];
-    g.hubDist[i] = h === undefined ? 999 : Math.hypot(g.x[i] - g.x[h], g.y[i] - g.y[h], g.z[i] - g.z[h]);
-  }
-  // Brain-to-phone: each region's points go to its own layer, matched by
-  // angle so every region flows into its layer instead of scrambling.
-  const [a0, p0] = VIEWS.home;
-  const ang = (i: number) => {
-    const xr = g.x[i] * Math.cos(a0) - g.y[i] * Math.sin(a0);
-    const yr = g.x[i] * Math.sin(a0) + g.y[i] * Math.cos(a0);
-    const sy = g.z[i] * Math.cos(p0) + xr * Math.sin(p0);
-    return Math.atan2(-sy, -yr);
-  };
-  {
-    const first: Layer = { ...LAYERS[0], rects: [[PX, PY, PW, PH, PR], ...LAYERS[0].rects] };
-    const pts = layerPoints(first, N);
-    const a = Array.from({ length: N }, (_, i) => i).sort((i, j) => ang(i) - ang(j));
-    const b = pts.map((_, i) => i).sort((i, j) => Math.atan2(pts[i][1] - PCY, pts[i][0] - PCX) - Math.atan2(pts[j][1] - PCY, pts[j][0] - PCX));
-    a.forEach((idx, k) => {
-      g.target[idx * 2] = pts[b[k]][0];
-      g.target[idx * 2 + 1] = pts[b[k]][1];
-      g.layer[idx] = 0;
-    });
-  }
-  for (let i = 0; i < N; i++) g.order[i] = rand(i, 4.1414);
-  return g;
-}
-
-function sprite(c: RGB) {
-  const cv = document.createElement("canvas");
-  cv.width = cv.height = 64;
-  const x = cv.getContext("2d")!;
-  const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},1)`);
-  gr.addColorStop(0.25, `rgba(${c[0]},${c[1]},${c[2]},0.35)`);
-  gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
-  x.fillStyle = gr;
-  x.fillRect(0, 0, 64, 64);
-  return cv;
-}
-
-/* ---------- helpers -------------------------------------------------- */
+/* ---------- helpers ---------------------------------------------------- */
 
 const clamp = (v: number) => Math.max(0, Math.min(1, v));
 const seg = (v: number, a: number, b: number) => clamp((v - a) / (b - a));
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-const smooth = (x: number) => x * x * (3 - 2 * x);
+const pop = (t: number) => {
+  // overshoots a little, like something landing
+  const c = 1.7;
+  const x = clamp(t) - 1;
+  return 1 + (c + 1) * x * x * x + c * x * x;
+};
 const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 
-type Waypoint = { step: number; region: Region | null };
+// The path: a slalom with one turn per step.
+const D = 230; // world distance between stops
+const PATH_X = 170;
+const SWING = 105;
+const pathX = (wy: number) => PATH_X + SWING * Math.sin((wy / D) * Math.PI);
+const stopY = (i: number) => (i + 0.5) * D;
 
-/* ---------- component ------------------------------------------------ */
+// The big phone beside her: where each stop's screen is shown.
+const CARD = { x: 372, y: 52, w: 168, h: 336, r: 26 };
+const SC = { x: CARD.x + 10, y: CARD.y + 30, w: CARD.w - 20, h: CARD.h - 44 };
 
 export default function Background() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stepRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [active, setActive] = useState(-1);
-  const [stage, setStage] = useState(-1);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -322,23 +122,9 @@ export default function Background() {
     if (!canvas || !ctx) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const font = getComputedStyle(canvas).fontFamily;
-    const g = buildGeo();
-    const glowSprite = sprite(GLOW);
-    const hotSprite = sprite(HOT);
-
-    // The path through the brain: a waypoint per region per step.
-    const wps: Waypoint[] = [{ step: -1, region: null }];
-    steps.forEach((st, i) => st.regions.forEach((r) => wps.push({ step: i, region: r })));
-    wps.push({ step: steps.length - 1, region: null });
-
-    const nodeK = new Float32Array(N);
-    const sx = new Float32Array(N), sy = new Float32Array(N), sd = new Float32Array(N);
-    const regionLit: Record<string, number> = {};
-    REGION_CODES.forEach((r) => (regionLit[r] = 0));
-    let yaw = VIEWS.home[0], pitch = VIEWS.home[1];
-    let u = 0; // smoothed position along the path, in waypoints
-    let morph = 0, form = 0, build = 0;
-    let lastActive = -2, lastStage = -2;
+    const n = steps.length;
+    const prog = new Float32Array(n); // smoothed reading progress per step
+    let lastActive = -2;
     let frame = 0, running = false;
     let prevT = performance.now();
 
@@ -353,23 +139,15 @@ export default function Background() {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    // where each waypoint sits relative to the reading line (px, <0 = passed)
-    const wpOffsets = (vh: number) => {
-      const els = stepRefs.current;
-      const out: number[] = [];
-      const firstR = els[0]!.getBoundingClientRect();
-      out.push(firstR.top - vh * 0.25 - vh * 0.5);
-      steps.forEach((st, i) => {
-        const r = els[i]!.getBoundingClientRect();
-        const m = st.regions.length;
-        st.regions.forEach((_, j) => {
-          const f = m === 1 ? 0.5 : 0.18 + (0.62 * j) / (m - 1);
-          out.push(r.top + r.height * f - vh * 0.5);
-        });
-      });
-      const lastR = els[steps.length - 1]!.getBoundingClientRect();
-      out.push(lastR.top + vh * 0.05 - vh * 0.5);
-      return out;
+    const rr = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      const q = Math.max(0, Math.min(r, w / 2, h / 2));
+      ctx.moveTo(x + q, y);
+      ctx.arcTo(x + w, y, x + w, y + h, q);
+      ctx.arcTo(x + w, y + h, x, y + h, q);
+      ctx.arcTo(x, y + h, x, y, q);
+      ctx.arcTo(x, y, x + w, y, q);
+      ctx.closePath();
     };
 
     const tick = (now: number) => {
@@ -378,97 +156,436 @@ export default function Background() {
       const vh = window.innerHeight;
       const k = reduce ? 1 : 1 - Math.exp(-dt * 6);
       const els = stepRefs.current;
-      const sec = canvas.closest("section")?.getBoundingClientRect();
-      const lastR = els[steps.length - 1]?.getBoundingClientRect();
-      if (!sec || !lastR || !els[0]) {
+      if (!els[0]) {
         if (running) frame = requestAnimationFrame(tick);
         return;
       }
-
-      form += (clamp((vh * 0.95 - sec.top) / (vh * 0.8)) - form) * k;
-
-      // position along the path: hold at each region, travel between them
-      const off = wpOffsets(vh);
-      let goal = 0;
-      for (let i = 0; i < off.length; i++) {
-        if (off[i] <= 0) {
-          const next = off[i + 1];
-          goal = next === undefined ? i : i + smooth(seg(-off[i] / (next - off[i]), 0.2, 0.8));
-        }
+      for (let i = 0; i < n; i++) {
+        const r = els[i]!.getBoundingClientRect();
+        const span = i === n - 1 ? Math.max(1, r.height - vh * 0.5) : r.height;
+        const goal = clamp((vh * 0.62 - r.top) / span);
+        prog[i] += (goal - prog[i]) * k;
       }
-      u += (goal - u) * k;
-      const ki = Math.min(wps.length - 1, Math.floor(u));
-      const f = ease(clamp(u - ki));
-      const A = wps[ki], B = wps[Math.min(wps.length - 1, ki + 1)];
-      const va = VIEWS[A.region ?? "home"], vb = VIEWS[B.region ?? "home"];
-      const sway = reduce ? 0 : Math.sin(now / 4000) * 0.12;
-      yaw += (va[0] + (vb[0] - va[0]) * f + sway - yaw) * k;
-      pitch += (va[1] + (vb[1] - va[1]) * f - pitch) * k;
-
-      const near = wps[Math.round(u)];
-      const act = near.step;
+      let act = -1;
+      for (let i = 0; i < n; i++) if (prog[i] > 0.02) act = i;
       if (act !== lastActive) {
         lastActive = act;
         setActive(act);
       }
-      // regions of the current step light up as the path reaches them
-      const goalLit: Record<string, number> = {};
-      REGION_CODES.forEach((r) => (goalLit[r] = 0));
-      wps.forEach((w, i) => {
-        if (w.region && w.step === act) goalLit[w.region] = Math.max(goalLit[w.region], smooth(clamp((u - i) * 2 + 1)));
-      });
-      for (const r of REGION_CODES) regionLit[r] += (goalLit[r] - regionLit[r]) * k;
-      for (let i = 0; i < N; i++) {
-        const lit = regionLit[REGION_CODES[g.reg[i]]];
-        const t = smooth(clamp((lit * 120 - g.hubDist[i]) / 30));
-        nodeK[i] += (t - nodeK[i]) * k;
-      }
-
-      // build: how many steps have been read (0..7). Each step adds one layer.
-      let goalB = 0;
-      for (let i = 0; i < steps.length - 1; i++) {
-        const r = els[i]!.getBoundingClientRect();
-        goalB += clamp((vh * 0.55 - r.top) / r.height);
-      }
-      goalB += clamp((vh * 0.7 - lastR.top) / Math.max(1, lastR.height - vh * 0.5));
-      build += (goalB - build) * (reduce ? 1 : 1 - Math.exp(-dt * 6));
-      morph = clamp(build - (steps.length - 1));
-      const st = build < steps.length - 1.02 ? -1 : morph < 0.3 ? 0 : morph < 0.66 ? 1 : 2;
-      if (st !== lastStage) {
-        lastStage = st;
-        setStage(st);
-      }
-
       try {
-        draw(now, u);
+        draw(now / 1000);
       } catch (err) {
         console.error(err);
       }
       if (running) frame = requestAnimationFrame(tick);
     };
 
-    // Older Safari and Firefox lack ctx.roundRect; draw the corners by hand there.
-    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+    /* ---------- the girl -------------------------------------------------- */
+
+    const girl = (
+      X: (x: number) => number,
+      Y: (y: number) => number,
+      s: number,
+      x: number,
+      y: number,
+      o: { face: number; walk: number; phase: number; phone: number; happy: number; wave: number; puzzled: number; t: number },
+    ) => {
+      const sx = (v: number) => X(x + v * o.face);
+      const sy = (v: number) => Y(y + v);
+      const SKIN = "#f0c9a8", SKIN_D = "#d9a989", HAIR = "#2b1b14", DRESS = rgba(GLOW, 1), DRESS_D = "#3f68cf";
+      const limb = (pts: [number, number][], wdt: number, col: string) => {
+        ctx.beginPath();
+        pts.forEach(([a, b], i) => (i ? ctx.lineTo(sx(a), sy(b)) : ctx.moveTo(sx(a), sy(b))));
+        ctx.lineWidth = wdt * s;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = col;
+        ctx.stroke();
+      };
+      const bob = Math.abs(Math.sin(o.phase)) * 1.4 * o.walk;
+      const hip = -24 - bob;
+      const sh = -45 - bob;
+      // shadow
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
       ctx.beginPath();
-      if (typeof ctx.roundRect === "function") {
-        ctx.roundRect(x, y, w, h, r);
-        return;
-      }
-      const rr = Math.max(0, Math.min(r, w / 2, h / 2));
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.ellipse(X(x), Y(y + 1), 12 * s, 3 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // legs, with little shoes
+      const leg = Math.sin(o.phase) * 0.5 * o.walk;
+      const legs: [number, number][][] = [1, -1].map((sgn) => {
+        const a = leg * sgn;
+        const kx = Math.sin(a) * 11.5, ky = hip + Math.cos(a) * 11.5;
+        const fx = kx + Math.sin(a * 0.5) * 12, fy = Math.min(-1, ky + 12.5);
+        return [[sgn * 2.2, hip], [kx + sgn * 2.2, ky], [fx + sgn * 2.2, fy]] as [number, number][];
+      });
+      legs.forEach((pts, j) => {
+        limb(pts, 3.4, j ? SKIN_D : SKIN);
+        const [fx, fy] = pts[2];
+        ctx.fillStyle = j ? "#1b2233" : "#262f45";
+        ctx.beginPath();
+        ctx.ellipse(sx(fx + 1.5), sy(fy + 0.5), 3.4 * s, 1.9 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // back arm (behind the dress)
+      const swing = Math.sin(o.phase) * 0.55 * o.walk * (1 - o.phone);
+      limb([[-3, sh + 3], [-3 - Math.sin(swing) * 6, sh + 10], [-3 - Math.sin(swing) * 10, sh + 17]], 3, SKIN_D);
+      // dress
+      const grd = ctx.createLinearGradient(sx(0), sy(sh), sx(0), sy(hip + 5));
+      grd.addColorStop(0, DRESS);
+      grd.addColorStop(1, DRESS_D);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.moveTo(sx(-5.5), sy(sh + 1));
+      ctx.quadraticCurveTo(sx(0), sy(sh - 1.5), sx(5.5), sy(sh + 1));
+      ctx.lineTo(sx(11 + Math.sin(o.phase) * o.walk), sy(hip + 5));
+      ctx.quadraticCurveTo(sx(0), sy(hip + 7.5), sx(-11 + Math.sin(o.phase) * o.walk), sy(hip + 5));
       ctx.closePath();
+      ctx.fill();
+      // front arm: swinging, holding the phone, or waving
+      if (o.wave > 0.01) {
+        const wv = Math.sin(o.t * 8) * 0.5 * o.wave;
+        limb([[3.5, sh + 3], [9, sh - 5], [10 + wv * 7, sh - 15]], 3, SKIN);
+        ctx.fillStyle = SKIN;
+        ctx.beginPath();
+        ctx.arc(sx(10 + wv * 7), sy(sh - 16), 2.4 * s, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (o.phone > 0.01) {
+        const hx = 11, hy = sh + 2 - o.phone * 4;
+        limb([[3.5, sh + 3], [9, sh + 11], [hx, hy + 2]], 3, SKIN);
+        ctx.save();
+        ctx.globalAlpha *= o.phone;
+        rr(sx(hx) - (o.face < 0 ? 6 * s : 0), sy(hy - 9), 6 * s, 10.5 * s, 1.6 * s);
+        ctx.fillStyle = "#121827";
+        ctx.fill();
+        rr(sx(hx) - (o.face < 0 ? 6 * s : 0) + 0.9 * s, sy(hy - 8), 4.2 * s, 8.5 * s, 1 * s);
+        ctx.fillStyle = rgba(GLOW, 0.9);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        limb([[3.5, sh + 3], [3.5 + Math.sin(-swing) * 6, sh + 10], [3.5 + Math.sin(-swing) * 10, sh + 17]], 3, SKIN);
+      }
+      // neck and head
+      limb([[0, sh], [0.5, sh - 4]], 3, SKIN);
+      const hy = sh - 11;
+      const tail = Math.sin(o.phase * 2) * o.walk;
+      // ponytail behind the head
+      ctx.fillStyle = HAIR;
+      ctx.beginPath();
+      ctx.ellipse(sx(-10.5 - tail), sy(hy + 2), 3.4 * s, 7 * s, o.face * (0.45 + tail * 0.15), 0, Math.PI * 2);
+      ctx.fill();
+      // hair as a full shape, then the face sits in front of it
+      ctx.fillStyle = HAIR;
+      ctx.beginPath();
+      ctx.arc(sx(-0.6), sy(hy - 0.8), 8 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = SKIN;
+      ctx.beginPath();
+      ctx.ellipse(sx(2.1), sy(hy + 1.4), 6 * s, 6.4 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // bangs
+      ctx.fillStyle = HAIR;
+      ctx.beginPath();
+      ctx.moveTo(sx(-2), sy(hy - 5));
+      ctx.quadraticCurveTo(sx(4), sy(hy - 8.6), sx(8), sy(hy - 2.2));
+      ctx.quadraticCurveTo(sx(4), sy(hy - 4.2), sx(-1), sy(hy - 1.5));
+      ctx.closePath();
+      ctx.fill();
+      // face: looks down at the phone while she uses it
+      const look = o.phone * 1.6;
+      ctx.fillStyle = "#2a1c16";
+      ctx.beginPath();
+      ctx.arc(sx(5.4), sy(hy + 0.8 + look * 0.6), 1.05 * s, 0, Math.PI * 2);
+      ctx.arc(sx(2), sy(hy + 0.8 + look * 0.6), 1.05 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(240,120,120,0.35)";
+      ctx.beginPath();
+      ctx.arc(sx(6.4), sy(hy + 3.6), 1.5 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#7a3b2c";
+      ctx.lineWidth = 1.1 * s;
+      ctx.beginPath();
+      const m = o.happy;
+      ctx.moveTo(sx(2.4), sy(hy + 4.4 + look * 0.4));
+      ctx.quadraticCurveTo(sx(3.9), sy(hy + 4.4 + look * 0.4 + 2 * m - 0.8 * o.puzzled), sx(5.6), sy(hy + 4.2 + look * 0.4 - 0.4 * o.puzzled));
+      ctx.stroke();
+      // a question mark when a screen confuses her, a spark when it works
+      if (o.puzzled > 0.02) {
+        ctx.globalAlpha = o.puzzled;
+        ctx.font = `700 ${15 * s}px ${font}`;
+        ctx.textAlign = "center";
+        ctx.fillStyle = rgba(WARM, 1);
+        ctx.fillText("?", sx(6), sy(hy - 16 - Math.sin(o.t * 4) * 1.5));
+        ctx.globalAlpha = 1;
+      }
+      if (o.happy > 0.5) {
+        const a = (o.happy - 0.5) * 2;
+        ctx.strokeStyle = rgba(HOT, a);
+        ctx.lineWidth = 1.6 * s;
+        for (let i = 0; i < 4; i++) {
+          const ang = -Math.PI / 2 + (i - 1.5) * 0.55;
+          const r0 = 15 + (1 - a) * 4, r1 = 20 + a * 2;
+          ctx.beginPath();
+          ctx.moveTo(sx(Math.cos(ang) * r0), sy(hy + Math.sin(ang) * r0));
+          ctx.lineTo(sx(Math.cos(ang) * r1), sy(hy + Math.sin(ang) * r1));
+          ctx.stroke();
+        }
+      }
     };
 
-    const me = new Float32Array(N);
-    const vis = new Float32Array(N);
-    const buckets: number[][] = Array.from({ length: 30 }, () => []);
-    const COLS: RGB[] = [DIM, GLOW, HOT];
+    /* ---------- the screens ------------------------------------------------ */
 
-    const draw = (now: number, u: number) => {
+    // Draws stop i's screen at local progress q (0..1). Returns where she taps
+    // and when, so the ripple and her reaction line up with the screen.
+    const screen = (
+      i: number,
+      q: number,
+      X: (x: number) => number,
+      Y: (y: number) => number,
+      s: number,
+    ): { tap: [number, number] | null; tapAt: number; doneAt: number; puzzled: number } => {
+      const { x, y, w, h } = SC;
+      const box = (bx: number, by: number, bw: number, bh: number, r: number, fill: string) => {
+        rr(X(bx), Y(by), bw * s, bh * s, r * s);
+        ctx.fillStyle = fill;
+        ctx.fill();
+      };
+      const bar = (bx: number, by: number, bw: number, a = 0.8, th = 5) => box(bx, by, bw, th, th / 2, rgba(TEXT, a));
+      const check = (cx: number, cy: number, r: number, a: number) => {
+        if (a <= 0) return;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = rgba(GREEN, 1);
+        ctx.beginPath();
+        ctx.arc(X(cx), Y(cy), r * s * pop(a), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2.4 * s;
+        ctx.beginPath();
+        ctx.moveTo(X(cx - r * 0.4), Y(cy));
+        ctx.lineTo(X(cx - r * 0.1), Y(cy + r * 0.32));
+        ctx.lineTo(X(cx + r * 0.45), Y(cy - r * 0.3));
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      };
+      const header = (wd = 70) => {
+        bar(x + 10, y + 8, 30, 0.45, 4);
+        bar(x + 10, y + 18, wd, 0.9, 7);
+      };
+
+      if (i === 0) {
+        // Too many identical buttons, she hesitates. Then one clear button.
+        const simplify = ease(seg(q, 0.42, 0.62));
+        header();
+        for (let r = 0; r < 4; r++)
+          for (let c = 0; c < 3; c++) {
+            const idx = r * 3 + c;
+            const bx = x + 10 + c * 43, by = y + 40 + r * 40;
+            ctx.globalAlpha = 1 - simplify;
+            box(bx, by, 38, 34, 6, ROW);
+            bar(bx + 6, by + 22, 20 + ((idx * 7) % 10), 0.35, 3);
+            box(bx + 6, by + 6, 10, 10, 3, rgba(TEXT, 0.25));
+            ctx.globalAlpha = 1;
+          }
+        const g = simplify;
+        if (g > 0) {
+          ctx.globalAlpha = g;
+          const bw = 38 + (w - 58) * g, bh = 34 + 10 * g;
+          const bx = x + w / 2 - bw / 2, by = y + 120 + (1 - g) * 20;
+          box(bx, by, bw, bh, 22 * g + 6 * (1 - g), rgba(GLOW, 1));
+          bar(bx + bw / 2 - 25, by + bh / 2 - 3, 50, 0.95, 6);
+          ctx.globalAlpha = 1;
+        }
+        check(x + w / 2, y + 205, 14, seg(q, 0.78, 0.9));
+        return { tap: [x + w / 2 + 10, y + 145], tapAt: 0.7, doneAt: 0.8, puzzled: seg(q, 0.12, 0.25) * (1 - seg(q, 0.45, 0.55)) };
+      }
+
+      if (i === 1) {
+        // A conversation: she is asked, she answers. Listening first.
+        header(60);
+        const b1 = easeOut(seg(q, 0.05, 0.25));
+        ctx.globalAlpha = b1;
+        box(x + 10, y + 45 + (1 - b1) * 8, 92, 40, 12, ROW);
+        bar(x + 20, y + 57 + (1 - b1) * 8, 66, 0.7, 4);
+        bar(x + 20, y + 68 + (1 - b1) * 8, 44, 0.5, 4);
+        ctx.globalAlpha = 1;
+        const typing = seg(q, 0.3, 0.5) * (1 - seg(q, 0.5, 0.55));
+        if (typing > 0) {
+          ctx.globalAlpha = typing;
+          box(x + w - 56, y + 100, 46, 22, 11, rgba(GLOW, 0.35));
+          for (let d = 0; d < 3; d++) {
+            const yy = Math.sin(q * 40 + d) * 1.5;
+            ctx.fillStyle = rgba(TEXT, 0.9);
+            ctx.beginPath();
+            ctx.arc(X(x + w - 44 + d * 11), Y(y + 111 + yy), 2.2 * s, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        const b2 = easeOut(seg(q, 0.55, 0.72));
+        ctx.globalAlpha = b2;
+        box(x + w - 100, y + 100 + (1 - b2) * 8, 90, 30, 12, rgba(GLOW, 1));
+        bar(x + w - 90, y + 112 + (1 - b2) * 8, 60, 0.95, 5);
+        ctx.globalAlpha = 1;
+        // the input bar with a send button she taps
+        box(x + 8, y + h - 36, w - 16, 28, 14, ROW);
+        box(x + w - 36, y + h - 33, 22, 22, 11, rgba(GLOW, 1));
+        check(x + w / 2, y + 170, 13, seg(q, 0.76, 0.88));
+        return { tap: [x + w - 25, y + h - 22], tapAt: 0.52, doneAt: 0.75, puzzled: 0 };
+      }
+
+      if (i === 2) {
+        // Skeleton turns into a clear list, which she scrolls through.
+        header(80);
+        const real = ease(seg(q, 0.12, 0.35));
+        const scroll = ease(seg(q, 0.45, 0.75)) * 70;
+        ctx.save();
+        rr(X(x), Y(y + 36), w * s, (h - 36) * s, 0);
+        ctx.clip();
+        const tones: RGB[] = [GLOW, WARM, GREEN, HOT, GLOW, WARM];
+        for (let r = 0; r < 6; r++) {
+          const by = y + 40 + r * 42 - scroll;
+          box(x + 8, by, w - 16, 36, 10, ROW);
+          box(x + 15, by + 7, 22, 22, 7, real > 0.5 ? rgba(tones[r], 0.85 * real) : rgba(TEXT, 0.12 + 0.1 * Math.sin(q * 30 + r)));
+          bar(x + 45, by + 11, 60 + ((r * 13) % 25), 0.25 + 0.6 * real, 5);
+          bar(x + 45, by + 22, 40, 0.15 + 0.3 * real, 4);
+        }
+        ctx.restore();
+        check(x + w / 2, y + h - 30, 13, seg(q, 0.8, 0.92));
+        // the swipe: a thumb trail moving up
+        return { tap: seg(q, 0.45, 0.75) > 0 && seg(q, 0.45, 0.75) < 1 ? [x + w / 2 + 20, y + 200 - scroll * 1.2] : null, tapAt: 0.45, doneAt: 0.8, puzzled: 0 };
+      }
+
+      if (i === 3) {
+        // Three cards built from the same component; she opens one.
+        header(64);
+        const open = ease(seg(q, 0.55, 0.75));
+        for (let c = 0; c < 3; c++) {
+          const a = pop(seg(q, 0.05 + c * 0.1, 0.25 + c * 0.1));
+          if (a <= 0) continue;
+          const by = y + 42 + c * 70;
+          const grow = c === 1 ? open : 0;
+          ctx.globalAlpha = clamp(a) * (c !== 1 ? 1 - open * 0.5 : 1);
+          box(x + 8, by - grow * 10, w - 16, 62 + grow * 20, 12, c === 1 ? rgba(GLOW, 0.3 + 0.7 * open) : ROW);
+          box(x + 16, by + 8 - grow * 10, 30, 30, 8, rgba(c === 1 ? TEXT : GLOW, c === 1 ? 0.25 + 0.6 * open : 0.7));
+          bar(x + 54, by + 12 - grow * 10, 64, 0.85, 5);
+          bar(x + 54, by + 24 - grow * 10, 44, 0.45, 4);
+          if (grow > 0.3) bar(x + 16, by + 50, w - 48, 0.7 * grow, 4);
+          ctx.globalAlpha = 1;
+        }
+        check(x + w / 2, y + h - 34, 13, seg(q, 0.8, 0.92));
+        return { tap: [x + w / 2 + 6, y + 135], tapAt: 0.52, doneAt: 0.75, puzzled: 0 };
+      }
+
+      if (i === 4) {
+        // Pick a pastry, add one more, place the order.
+        const added = q > 0.42 ? 2 : 1;
+        header(56);
+        box(x + 8, y + 36, w - 16, 120, 14, ROW);
+        // a bun, drawn simply
+        const bx = x + w / 2, by = y + 92;
+        const grd = ctx.createRadialGradient(X(bx - 8), Y(by - 10), 2, X(bx), Y(by), 38 * s);
+        grd.addColorStop(0, "#f2c27b");
+        grd.addColorStop(1, "#b5702f");
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.ellipse(X(bx), Y(by), 38 * s, 28 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,240,215,0.6)";
+        ctx.lineWidth = 2 * s;
+        for (const d of [-14, 0, 14]) {
+          ctx.beginPath();
+          ctx.arc(X(bx + d), Y(by - 2), 12 * s, Math.PI * 1.15, Math.PI * 1.85);
+          ctx.stroke();
+        }
+        // quantity stepper
+        box(x + 14, y + 166, 70, 26, 13, ROW);
+        ctx.font = `600 ${11 * s}px ${font}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = rgba(TEXT, 0.9);
+        ctx.fillText("–", X(x + 28), Y(y + 179));
+        ctx.fillText(String(added), X(x + 49), Y(y + 179));
+        box(x + 60, y + 169, 20, 20, 10, rgba(GLOW, 1));
+        ctx.fillStyle = "#fff";
+        ctx.fillText("+", X(x + 70), Y(y + 179));
+        // order button
+        const press = Math.sin(Math.PI * seg(q, 0.66, 0.74));
+        box(x + 14 + press * 2, y + h - 52 + press, w - 28 - press * 4, 34, 17, rgba(TEXT, 0.95));
+        bar(x + w / 2 - 22, y + h - 37, 44, 0.9, 5);
+        ctx.globalAlpha = 1;
+        const done = seg(q, 0.76, 0.88);
+        if (done > 0) {
+          ctx.globalAlpha = done * 0.85;
+          box(x, y, w, h, 12, SCREEN);
+          ctx.globalAlpha = 1;
+          check(x + w / 2, y + h / 2, 24, done);
+        }
+        const tapA = q < 0.55 ? [x + 70, y + 179] : [x + w / 2 + 12, y + h - 35];
+        return { tap: tapA as [number, number], tapAt: q < 0.55 ? 0.36 : 0.68, doneAt: 0.76, puzzled: 0 };
+      }
+
+      if (i === 5) {
+        // A notification arrives; she taps it and reads it.
+        const icons: RGB[] = [GLOW, WARM, GREEN, HOT, WARM, GLOW, GREEN, HOT];
+        const opened = ease(seg(q, 0.55, 0.75));
+        for (let c = 0; c < 8; c++) {
+          const ix = x + 16 + (c % 4) * 32, iy = y + 70 + Math.floor(c / 4) * 40;
+          ctx.globalAlpha = 1 - opened * 0.7;
+          box(ix, iy, 24, 24, 7, rgba(icons[c], 0.75));
+          ctx.globalAlpha = 1;
+        }
+        const n1 = easeOut(seg(q, 0.15, 0.32));
+        const ny = y + 8 - (1 - n1) * 50 + opened * 20;
+        const nh = 40 + opened * 130;
+        ctx.globalAlpha = n1;
+        box(x + 8, ny, w - 16, nh, 12, rgba(TEXT, 0.95));
+        box(x + 16, ny + 9, 22, 22, 6, rgba(GLOW, 1));
+        bar(x + 46, ny + 11, 60, 0.0, 5);
+        box(x + 46, ny + 11, 60, 5, 2.5, "rgba(13,18,32,0.75)");
+        box(x + 46, ny + 22, 40, 4, 2, "rgba(13,18,32,0.4)");
+        if (opened > 0.2) {
+          ctx.globalAlpha = n1 * opened;
+          for (let l = 0; l < 5; l++) box(x + 16, ny + 46 + l * 14, w - 36 - (l === 4 ? 40 : 0), 5, 2.5, "rgba(13,18,32,0.35)");
+          box(x + 16, ny + nh - 30, w - 32, 22, 11, rgba(GLOW, 1));
+        }
+        ctx.globalAlpha = 1;
+        check(x + w / 2, y + h - 34, 13, seg(q, 0.8, 0.92));
+        return { tap: [x + w / 2, y + 28], tapAt: 0.5, doneAt: 0.78, puzzled: 0 };
+      }
+
+      // Last stop: one button, one tap, done. Then she waves to you.
+      const press = Math.sin(Math.PI * seg(q, 0.42, 0.5));
+      const done = seg(q, 0.52, 0.66);
+      const R = 34 - press * 3;
+      ctx.fillStyle = rgba(done > 0 ? GREEN : GLOW, 1);
+      ctx.beginPath();
+      ctx.arc(X(x + w / 2), Y(y + h / 2 - 10), R * s * (done > 0 ? pop(done) : 1), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2.6 * s;
+      if (done <= 0) {
+        // an envelope
+        const ex = x + w / 2, ey = y + h / 2 - 10;
+        ctx.strokeRect(X(ex - 13), Y(ey - 9), 26 * s, 18 * s);
+        ctx.beginPath();
+        ctx.moveTo(X(ex - 13), Y(ey - 9));
+        ctx.lineTo(X(ex), Y(ey + 2));
+        ctx.lineTo(X(ex + 13), Y(ey - 9));
+        ctx.stroke();
+      } else {
+        const cx = x + w / 2, cy = y + h / 2 - 10;
+        ctx.beginPath();
+        ctx.moveTo(X(cx - 12), Y(cy));
+        ctx.lineTo(X(cx - 3), Y(cy + 9));
+        ctx.lineTo(X(cx + 13), Y(cy - 9));
+        ctx.stroke();
+      }
+      bar(x + w / 2 - 30, y + h / 2 + 40, 60, 0.5, 5);
+      return { tap: [x + w / 2 + 8, y + h / 2 - 4], tapAt: 0.44, doneAt: 0.55, puzzled: 0 };
+    };
+
+    /* ---------- one frame --------------------------------------------------- */
+
+    const draw = (t: number) => {
       const { width: w, height: h } = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, w, h);
       const s = Math.min(w / 610, h / 440);
@@ -476,483 +593,137 @@ export default function Background() {
       const oy = (h - 440 * s) / 2;
       const X = (x: number) => ox + x * s;
       const Y = (y: number) => oy + y * s;
-      const px1 = Math.max(0.8, s); // a "pixel" that stays visible on small screens
-      const txt = (str: string, x: number, y: number, size: number, weight: number, color: string, align: CanvasTextAlign = "left") => {
-        ctx.font = `${weight} ${size * s}px ${font}`;
-        ctx.textAlign = align;
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = color;
-        ctx.fillText(str, X(x), Y(y));
-      };
-      const t = now / 1000;
 
-      const s1 = seg(build, 0.72, 1.35); // the brain's points become the first layer
-      const s2 = seg(morph, 0.1, 0.4); // the layers close into one phone
-      const s3 = seg(morph, 0.35, 0.65); // layers -> interface
-      const s4 = seg(morph, 0.68, 1); // interaction
-      const ex = 1 - ease(s2); // how far apart the layers are
-      // each later step drops its layer onto the stack, like adding a topping
-      const app = LAYERS.map((_, L) => (L === 0 ? ease(seg(build, 1.1, 1.45)) : ease(seg(build, L + 1, L + 1.45))));
-      STACK_N = Math.max(1, app.reduce((a, b) => a + b, 0));
-      const brainA = 1 - ease(seg(s1, 0.08, 0.55));
+      // where she is on the path: she walks to the next stop at the start of
+      // each step, then stays there while the step is read
+      let p = 0;
+      for (let i = 1; i < n; i++) p += ease(seg(prog[i], 0, 0.32));
+      const stop = Math.min(n - 1, Math.round(p));
+      const at = clamp(1 - Math.abs(p - stop) * 3.5); // 1 when standing at a stop
+      const q = seg(prog[stop], stop === 0 ? 0.05 : 0.34, 0.92);
+      const wy = (p + 0.5) * D;
+      const walk = 1 - at;
 
-      // camera: the brain spins a little faster as it dissolves into the phone
-      const a = yaw + ease(s1) * 1.4;
-      const p = pitch * (1 - ease(s1));
-      const ca = Math.cos(a), sa = Math.sin(a), cp = Math.cos(p), sp = Math.sin(p);
-      const F = 520;
-      const project = (x: number, y: number, z: number): [number, number, number] => {
-        const xr = x * ca - y * sa;
-        const yr = x * sa + y * ca;
-        const d = xr * cp - z * sp;
-        const up = z * cp + xr * sp;
-        const pf = F / (F + d);
-        return [BCX - yr * K * pf, BCY - up * K * pf, d];
-      };
-      const depthFade = (d: number) => 0.16 + 0.84 * clamp((75 - d) / 150);
-
-      /* --- points --- */
-      for (const b of buckets) b.length = 0;
-      for (let i = 0; i < N; i++) {
-        const fi = ease(clamp(form * 1.5 - g.order[i] * 0.5));
-        const x = g.dx[i] + (g.x[i] - g.dx[i]) * fi;
-        const y = g.dy[i] + (g.y[i] - g.dy[i]) * fi;
-        const z = g.dz[i] + (g.z[i] - g.dz[i]) * fi;
-        let [qx, qy, d] = project(x, y, z);
-        let e = 0;
-        if (s1 > 0) {
-          e = ease(clamp(s1 * 1.35 - g.order[i] * 0.35));
-          const [tx, ty] = iso(g.target[i * 2], g.target[i * 2 + 1], g.layer[i], ex);
-          qx += (tx - qx) * e;
-          qy += (ty - qy) * e;
-        }
-        me[i] = e;
-        sx[i] = X(qx);
-        sy[i] = Y(qy);
-        sd[i] = d;
-        // light the real surface: folds from sulcal depth, shape from normals
-        const nxr = g.nx[i] * ca - g.ny[i] * sa;
-        const facing = -(nxr * cp - g.nz[i] * sp);
-        const lightness = facing > 0 ? 0.12 + 0.88 * Math.pow(facing, 0.8) : 0.06 * (1 + facing);
-        const rim = facing > -0.2 ? Math.pow(1 - Math.abs(facing), 3) : 0;
-        const fa = facing > 0 ? 1 : 0.22;
-        vis[i] = fa;
-        const kk = nodeK[i] * brainA;
-        const gyr = 0.3 + 0.7 * g.bri[i];
-        const base = (gyr * lightness * 0.8 + rim * 0.32) * (0.25 + 0.75 * form);
-        const alpha = (base + (Math.min(1, 0.4 + kk) * fa * gyr - base) * Math.max(kk, 0) + (0.85 - base) * e) * (1 - ease(seg(build, 1.35, 1.9))) * (1 - ease(clamp(s3 * 1.6)));
-        if (alpha < 0.02) continue;
-        const col = kk > 0.6 ? 2 : kk > 0.15 || e > 0.5 ? 1 : 0;
-        buckets[col * 10 + Math.min(9, Math.floor(alpha * 10))].push(i);
+      // the camera follows her, with the path drawn in world space
+      const GX = 0, GY = 330; // her feet on screen
+      const toY = (y: number) => GY + (y - wy) * 0.85;
+      ctx.lineCap = "round";
+      // future path, dashed and dim
+      ctx.setLineDash([2 * s, 7 * s]);
+      ctx.strokeStyle = rgba(TEXT, 0.22);
+      ctx.lineWidth = 2.2 * s;
+      ctx.beginPath();
+      for (let yy = wy; yy < wy + 420; yy += 6) {
+        const px = X(pathX(yy) + GX), py = Y(toY(yy));
+        if (yy === wy) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
       }
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      for (let bi = 0; bi < 30; bi++) {
-        const list = buckets[bi];
-        if (!list.length) continue;
-        const col = COLS[Math.floor(bi / 10)];
-        ctx.fillStyle = rgba(col, ((bi % 10) + 0.5) / 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // walked path, glowing
+      ctx.strokeStyle = rgba(GLOW, 0.85);
+      ctx.lineWidth = 3 * s;
+      ctx.shadowColor = rgba(GLOW, 0.6);
+      ctx.shadowBlur = 10 * s;
+      ctx.beginPath();
+      for (let yy = Math.max(0, wy - 420); yy <= wy; yy += 6) {
+        const px = X(pathX(yy) + GX), py = Y(toY(yy));
+        if (yy === Math.max(0, wy - 420)) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      // the stops
+      for (let i = 0; i < n; i++) {
+        const sy = toY(stopY(i));
+        if (sy < -40 || sy > 480) continue;
+        const reached = p >= i - 0.02;
+        const sxp = pathX(stopY(i));
+        ctx.fillStyle = reached ? rgba(GLOW, 1) : "#0f1522";
+        ctx.strokeStyle = reached ? rgba(HOT, 0.9) : rgba(TEXT, 0.3);
+        ctx.lineWidth = 1.6 * s;
         ctx.beginPath();
-        for (const i of list) {
-          const r = px1 * (1.05 + nodeK[i] * brainA * 0.8 + me[i] * 0.45);
-          ctx.rect(sx[i] - r / 2, sy[i] - r / 2, r, r);
-        }
+        ctx.ellipse(X(sxp), Y(sy), 16 * s, 6 * s, 0, 0, Math.PI * 2);
         ctx.fill();
-      }
-      // a soft glow around lit neurons
-      if (brainA > 0.01) {
-        const R = 6 * px1;
-        for (let i = 0; i < N; i += 3) {
-          const kk = nodeK[i] * brainA;
-          if (kk < 0.25) continue;
-          ctx.globalAlpha = 0.3 * kk * vis[i] * (0.4 + 0.6 * g.bri[i]);
-          ctx.drawImage(glowSprite, sx[i] - R, sy[i] - R, R * 2, R * 2);
-        }
+        ctx.stroke();
+        ctx.font = `600 ${11 * s}px ${font}`;
+        ctx.textAlign = sxp > PATH_X ? "left" : "right";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = reached ? rgba(HOT, 0.95) : rgba(TEXT, 0.35);
+        ctx.globalAlpha = clamp(Math.abs(p - i) * 2.5); // her own stop needs no number
+        ctx.fillText(String(i + 1).padStart(2, "0"), X(sxp + (sxp > PATH_X ? 24 : -24)), Y(sy));
         ctx.globalAlpha = 1;
       }
 
-      /* --- signal paths between the regions of the current step --- */
-      if (brainA > 0.01 && lastActive >= 0) {
-        for (let i = 0; i < wps.length - 1; i++) {
-          const wa = wps[i], wb = wps[i + 1];
-          if (!wa.region || !wb.region || wa.step !== lastActive || wb.step !== lastActive) continue;
-          const pr = clamp(u - i);
-          if (pr <= 0) continue;
-          const ha = HUBS[wa.region as keyof typeof HUBS], hb = HUBS[wb.region as keyof typeof HUBS];
-          const A = [g.x[ha], g.y[ha], g.z[ha]], B = [g.x[hb], g.y[hb], g.z[hb]];
-          const ra = Math.hypot(A[0], A[1], A[2]), rb = Math.hypot(B[0], B[1], B[2]);
-          const lift = 0.22 * Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]);
-          const M = 44;
-          const pts: [number, number, number][] = [];
-          for (let j = 0; j <= M; j++) {
-            const tt = j / M;
-            const m0 = A[0] + (B[0] - A[0]) * tt, m1 = A[1] + (B[1] - A[1]) * tt, m2 = A[2] + (B[2] - A[2]) * tt;
-            const len = Math.hypot(m0, m1, m2) || 1;
-            const R = ra + (rb - ra) * tt + lift * Math.sin(Math.PI * tt);
-            const [qx, qy, d] = project((m0 / len) * R, (m1 / len) * R, (m2 / len) * R);
-            pts.push([X(qx), Y(qy), d]);
-          }
-          const end = pr * M;
-          for (let j = 0; j < Math.ceil(end); j++) {
-            const fr = Math.min(1, end - j);
-            const [x0, y0, d0] = pts[j];
-            const [x1, y1] = pts[j + 1];
-            const xe = x0 + (x1 - x0) * fr, ye = y0 + (y1 - y0) * fr;
-            const fa = depthFade(d0) * brainA;
-            ctx.strokeStyle = rgba(GLOW, 0.18 * fa);
-            ctx.lineWidth = 5 * px1;
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(xe, ye);
-            ctx.stroke();
-            ctx.strokeStyle = rgba(HOT, 0.85 * fa);
-            ctx.lineWidth = 1.4 * px1;
-            ctx.stroke();
-          }
-          // the signal: a bright head while drawing, then pulses that keep travelling
-          const head = pr < 1 ? pr : reduce ? -1 : (t * 0.45 + i * 0.37) % 1;
-          if (head >= 0) {
-            const j = Math.min(M - 1, Math.floor(head * M));
-            const fr = head * M - j;
-            const hx = pts[j][0] + (pts[j + 1][0] - pts[j][0]) * fr;
-            const hy = pts[j][1] + (pts[j + 1][1] - pts[j][1]) * fr;
-            const R = 11 * px1;
-            ctx.globalAlpha = depthFade(pts[j][2]) * brainA;
-            ctx.drawImage(hotSprite, hx - R, hy - R, R * 2, R * 2);
-            ctx.globalAlpha = 1;
-          }
-        }
-      }
+      // which way she faces: the direction the path turns under her feet
+      const G = 3.5; // her size
+      const dir = Math.cos((wy / D) * Math.PI) >= 0 ? 1 : -1;
+      const gxp = pathX(wy);
+      // when she taps and when each screen confirms, so her face reacts in sync
+      const TIMING: [number, number][] = [[0.7, 0.8], [0.52, 0.75], [0.45, 0.8], [0.52, 0.75], [0.68, 0.76], [0.5, 0.78], [0.44, 0.55]];
+      const [tapAt, doneAt] = TIMING[stop];
+      const puzzled = stop === 0 ? seg(q, 0.12, 0.25) * (1 - seg(q, 0.45, 0.55)) : 0;
+      const phone = at * ease(seg(q, 0, 0.12)) * (stop === n - 1 ? 1 - seg(q, 0.7, 0.8) : 1);
+      girl(X, Y, s * G, gxp, GY, {
+        face: walk > 0.3 ? dir : 1,
+        walk,
+        phase: wy * 0.11,
+        phone,
+        happy: at * seg(q, doneAt, doneAt + 0.1),
+        wave: stop === n - 1 ? at * seg(q, 0.72, 0.82) : 0,
+        puzzled: at * puzzled,
+        t,
+      });
 
-      /* --- region hubs: a glowing point with a ping --- */
-      const hubScreen: Partial<Record<Region, [number, number, number]>> = {};
-      if (brainA > 0.01) {
-        for (const r of Object.keys(HUBS) as Region[]) {
-          const lit = regionLit[r] * brainA;
-          if (lit < 0.03) continue;
-          const hi = HUBS[r as keyof typeof HUBS];
-          const fa = 0.25 + 0.75 * vis[hi];
-          const hx = sx[hi], hy = sy[hi];
-          hubScreen[r] = [hx, hy, fa * lit];
-          const R = 18 * px1;
-          ctx.globalAlpha = lit * fa;
-          ctx.drawImage(hotSprite, hx - R, hy - R, R * 2, R * 2);
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = rgba([255, 255, 255], 0.95 * lit * fa);
-          ctx.beginPath();
-          ctx.arc(hx, hy, 2.4 * px1, 0, Math.PI * 2);
-          ctx.fill();
-          if (!reduce) {
-            const ph = (t * 0.6) % 1;
-            ctx.strokeStyle = rgba(HOT, (1 - ph) * 0.8 * lit * fa);
-            ctx.lineWidth = 1.2 * px1;
-            ctx.beginPath();
-            ctx.arc(hx, hy, (4 + ph * 22) * px1, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.restore();
-
-      /* --- the layers, exploded and then closing --- */
-      const layA = 1 - ease(clamp(s3 * 1.5));
-      if (layA > 0.01) {
+      // the big phone: what she sees
+      const cardA = at * ease(seg(q, 0, 0.14));
+      if (cardA > 0.01) {
         ctx.save();
-        const poly = (pts: [number, number][]) => {
-          ctx.beginPath();
-          pts.forEach(([x, y], k) => (k ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))));
-          ctx.closePath();
-        };
-        const quad = (L: number, [x, y, w, h]: R5) => poly([iso(x, y, L, ex), iso(x + w, y, L, ex), iso(x + w, y + h, L, ex), iso(x, y + h, L, ex)]);
-        LAYERS.forEach((layer, L) => {
-          // each layer arrives a little after the one below it
-          const la = layA * app[L];
-          if (la < 0.01) return;
-          // a new layer drops in from above and settles on the stack
-          const drop = (1 - app[L]) * 70 * ex;
-          ctx.save();
-          ctx.translate(0, -drop * s);
-          ctx.globalAlpha = la;
-          // the plate every layer sits on
-          quad(L, [PX, PY, PW, PH, PR]);
-          ctx.fillStyle = rgba(GLOW, 0.035 + 0.03 * ex);
-          ctx.fill();
-          ctx.strokeStyle = rgba(GLOW, 0.22 * ex + 0.08);
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          if (L === 1) {
-            ctx.setLineDash([4, 3]);
-            ctx.strokeStyle = rgba(GLOW, 0.75);
-            for (const r of wireRects.slice(1)) {
-              quad(L, r);
-              ctx.stroke();
-            }
-            ctx.setLineDash([]);
-            for (let c = 1; c < 4; c++) {
-              const gx = PX + (PW / 4) * c;
-              poly([iso(gx, PY + 10, L, ex), iso(gx, PY + PH - 10, L, ex)]);
-              ctx.strokeStyle = rgba(GLOW, 0.14);
-              ctx.stroke();
-            }
-          } else if (L === 2) {
-            quad(L, UI.card);
-            ctx.fillStyle = rgba(GLOW, 0.85);
-            ctx.fill();
-            const tones: RGB[] = [GLOW, [240, 170, 80], [80, 200, 130]];
-            layer.rects.slice(1).forEach((r, k) => {
-              quad(L, r);
-              ctx.fillStyle = rgba(tones[k], 0.8);
-              ctx.fill();
-            });
-          } else if (L === 0) {
-            ctx.fillStyle = rgba(TEXT, 0.85);
-            for (const r of layer.rects) {
-              quad(L, r);
-              ctx.fill();
-            }
-          } else if (L === 3) {
-            quad(L, UI.button);
-            ctx.fillStyle = rgba(TEXT, 0.95);
-            ctx.fill();
-          } else if (layer.circle) {
-            const [tx0, ty0, tw0, th0] = layer.rects[0];
-            quad(L, layer.rects[0]);
-            ctx.fillStyle = rgba(TEXT, 0.9);
-            ctx.fill();
-            poly(Array.from({ length: 16 }, (_, k) => iso(tx0 + 16 + Math.cos((k / 16) * Math.PI * 2) * 6, ty0 + th0 / 2 + Math.sin((k / 16) * Math.PI * 2) * 6, L, ex)));
-            ctx.fillStyle = "rgba(47,158,91,1)";
-            ctx.fill();
-            quad(L, [tx0 + 28, ty0 + th0 / 2 - 2.5, tw0 * 0.45, 5, 2]);
-            ctx.fillStyle = rgba([13, 18, 32], 0.6);
-            ctx.fill();
-            const [cx, cy, r] = layer.circle;
-            for (const [rr, al] of [[r * 1.6, 0.25], [r, 0.55], [r * 0.45, 1]] as [number, number][]) {
-              poly(Array.from({ length: 28 }, (_, k) => iso(cx + Math.cos((k / 28) * Math.PI * 2) * rr, cy + Math.sin((k / 28) * Math.PI * 2) * rr, L, ex)));
-              if (rr < r) {
-                ctx.fillStyle = rgba(HOT, al);
-                ctx.fill();
-              } else {
-                ctx.strokeStyle = rgba(HOT, al);
-                ctx.lineWidth = 1.4;
-                ctx.stroke();
-              }
-            }
-          }
-          // label: what the layer is, and which region builds it
-          if (ex > 0.05 && w > 420) {
-            const [lx, ly] = iso(PX + PW, PY, L, ex);
-            ctx.globalAlpha = la * ease(clamp(ex * 1.4 - 0.2));
-            ctx.strokeStyle = rgba(GLOW, 0.5);
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(X(lx + 6), Y(ly));
-            ctx.lineTo(X(lx + 26), Y(ly));
-            ctx.stroke();
-            txt(layer.name, lx + 32, ly - 6, 10.5, 600, rgba(TEXT, 0.95));
-            txt(layer.area, lx + 32, ly + 8, 9.5, 500, rgba(HOT, 0.9));
-          }
-          ctx.restore();
-        });
-        ctx.restore();
-      }
-
-      /* --- interface --- */
-      if (s3 > 0.001) {
-        const part = (k: number) => easeOut(clamp(s3 * 1.8 - k * 0.8));
-        ctx.save();
-        ctx.globalAlpha = part(0);
-        ctx.shadowColor = rgba(GLOW, 0.35);
-        ctx.shadowBlur = 40 * s;
-        roundRect(X(PX), Y(PY), PW * s, PH * s, PR * s);
+        ctx.globalAlpha = cardA;
+        // zoom lines from her phone to the big one
+        const hpx = X(gxp + 14 * G), hpy = Y(GY - 52 * G);
+        ctx.strokeStyle = rgba(GLOW, 0.25);
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(hpx, hpy);
+        ctx.lineTo(X(CARD.x), Y(CARD.y + 20));
+        ctx.moveTo(hpx, hpy + 8 * s);
+        ctx.lineTo(X(CARD.x), Y(CARD.y + CARD.h - 20));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const lift = (1 - cardA) * 14;
+        ctx.translate(0, lift * s);
+        ctx.shadowColor = rgba(GLOW, 0.3);
+        ctx.shadowBlur = 30 * s;
+        rr(X(CARD.x), Y(CARD.y), CARD.w * s, CARD.h * s, CARD.r * s);
         ctx.fillStyle = SCREEN;
         ctx.fill();
-        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = "rgba(255,255,255,0.16)";
-        ctx.lineWidth = 1;
         ctx.stroke();
-        roundRect(X(PX + PW / 2 - 30), Y(PY + 10), 60 * s, 16 * s, 8 * s);
+        rr(X(CARD.x + CARD.w / 2 - 22), Y(CARD.y + 9), 44 * s, 12 * s, 6 * s);
         ctx.fillStyle = "#000";
         ctx.fill();
-        txt("9:41", PX + 26, PY + 18, 9, 600, rgba(TEXT, 1));
-        txt("Hi Noa", PX + 16, PY + 40, 9.5, 400, rgba(TEXT, 0.55));
-        txt("Keep going", PX + 16, PY + 56, 15, 600, rgba(TEXT, 1));
-
-        const cA = part(0.15);
-        ctx.globalAlpha = cA;
-        const [kx, ky, kw, kh, kr] = UI.card;
-        const lift = (1 - cA) * 8;
-        roundRect(X(kx), Y(ky + lift), kw * s, kh * s, kr * s);
-        ctx.fillStyle = rgba(GLOW, 1);
-        ctx.fill();
-        txt("Algebra, unit 4", kx + 14, ky + lift + 18, 8.5, 400, "rgba(255,255,255,0.78)");
-        txt("Linear equations", kx + 14, ky + lift + 36, 14, 600, "#ffffff");
-        const prog = 0.6 + 0.08 * ease(seg(s4, 0.55, 0.85));
-        txt(`${Math.round(prog * 100)}% complete`, kx + 14, ky + lift + 66, 8.5, 400, "rgba(255,255,255,0.85)");
-        roundRect(X(kx + 14), Y(ky + lift + 78), 100 * s, 4 * s, 2 * s);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.fill();
-        roundRect(X(kx + 14), Y(ky + lift + 78), 100 * prog * s, 4 * s, 2 * s);
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(X(kx + kw - 30), Y(ky + lift + kh - 30), 16 * s, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        const px0 = X(kx + kw - 33), py0 = Y(ky + lift + kh - 30);
-        ctx.moveTo(px0, py0 - 6 * s);
-        ctx.lineTo(px0 + 9 * s, py0);
-        ctx.lineTo(px0, py0 + 6 * s);
-        ctx.closePath();
-        ctx.fillStyle = rgba(GLOW, 1);
-        ctx.fill();
-
-        ctx.globalAlpha = part(0.3);
-        txt("This week", PX + 16, PY + 184, 10.5, 600, rgba(TEXT, 1));
-        txt("See all", PX + PW - 16, PY + 184, 9, 400, rgba(TEXT, 0.5), "right");
-        const tiles: [RGB, string, string, string][] = [
-          [GLOW, "y=x", "Graphing lines", "6 lessons, due Thursday"],
-          [[240, 170, 80], "?", "Word problems", "4 lessons, due Sunday"],
-          [[80, 200, 130], "✓", "Quiz: equations", "15 minutes"],
-        ];
-        UI.rows.forEach(([x, y, rw, rh, r], i) => {
-          ctx.globalAlpha = part(0.35 + i * 0.08);
-          const dx = (1 - ctx.globalAlpha) * 10;
-          roundRect(X(x + dx), Y(y), rw * s, rh * s, r * s);
-          ctx.fillStyle = "#151c2b";
-          ctx.fill();
-          ctx.strokeStyle = "rgba(255,255,255,0.06)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          roundRect(X(x + dx + 8), Y(y + 7.5), 23 * s, 23 * s, 7 * s);
-          ctx.fillStyle = rgba(tiles[i][0], 0.18);
-          ctx.fill();
-          txt(tiles[i][1], x + dx + 20, y + 19.5, 8, 600, rgba(tiles[i][0], 1), "center");
-          txt(tiles[i][2], x + dx + 40, y + 14, 10, 600, rgba(TEXT, 1));
-          txt(tiles[i][3], x + dx + 40, y + 26, 8, 400, rgba(TEXT, 0.5));
-        });
-
-        const [bx, by, bw, bh, br] = UI.button;
-        const press = Math.sin(Math.PI * seg(s4, 0.45, 0.62));
-        const sc = 1 - 0.04 * press;
-        ctx.globalAlpha = part(0.6);
-        const done = s4 > 0.6;
-        roundRect(X(bx + (bw * (1 - sc)) / 2), Y(by + (bh * (1 - sc)) / 2), bw * sc * s, bh * sc * s, br * s);
-        ctx.fillStyle = rgba(TEXT, 1);
-        ctx.fill();
-        txt(done ? "Continue lesson" : "Start lesson", bx + bw / 2, by + bh / 2 + 0.5, 10.5, 600, SCREEN, "center");
-        roundRect(X(PX + PW / 2 - 34), Y(PY + PH - 12), 68 * s, 3.5 * s, 2 * s);
-        ctx.fillStyle = rgba(TEXT, 0.8);
-        ctx.fill();
+        ctx.save();
+        rr(X(SC.x), Y(SC.y), SC.w * s, SC.h * s, 12 * s);
+        ctx.clip();
+        const r2 = screen(stop, q, X, Y, s);
         ctx.restore();
-
-        if (s4 < 0.3 && w > 420) {
-          ctx.save();
-          ctx.globalAlpha = part(0.7) * (1 - s4 / 0.3);
-          const notes: [number, string][] = [
-            [ky + kh / 2, "Primary task first"],
-            [UI.rows[1][1] + 20, "Scannable list, big tap targets"],
-            [by + bh / 2, "One clear next step"],
-          ];
-          for (const [ny, label] of notes) {
-            ctx.strokeStyle = rgba(GLOW, 0.7);
-            ctx.lineWidth = 1;
+        // her tap: a ripple where her finger lands
+        if (r2.tap) {
+          const tp = seg(q, tapAt - 0.04, tapAt + 0.12);
+          if (tp > 0 && tp < 1) {
+            ctx.strokeStyle = rgba(HOT, 1 - tp);
+            ctx.fillStyle = rgba(HOT, 0.35 * (1 - tp));
+            ctx.lineWidth = 2 * s;
             ctx.beginPath();
-            ctx.moveTo(X(PX + PW + 6), Y(ny));
-            ctx.lineTo(X(PX + PW + 22), Y(ny));
+            ctx.arc(X(r2.tap[0]), Y(r2.tap[1]), (5 + tp * 16) * s, 0, Math.PI * 2);
+            ctx.fill();
             ctx.stroke();
-            txt(label, PX + PW + 28, ny, 10, 500, rgba(HOT, 1));
           }
-          ctx.restore();
         }
-      }
-
-      /* --- region names, beside their glowing points --- */
-      if (w > 360 && brainA > 0.05) {
-        ctx.font = `500 ${Math.round(Math.max(11, 13 * s))}px ${font}`;
-        ctx.textBaseline = "middle";
-        ctx.textAlign = "center";
-        for (const r of Object.keys(hubScreen) as Region[]) {
-          const name = REGION_NAMES[r];
-          const [hx, hy, vis] = hubScreen[r]!;
-          if (!name || vis < 0.08) continue;
-          const ph = Math.max(20, 24 * s);
-          const pw = ctx.measureText(name).width + ph * 0.9;
-          const ly = hy - 26 * px1 - (1 - Math.min(1, vis)) * 6;
-          ctx.globalAlpha = Math.min(1, vis * 1.3);
-          roundRect(hx - pw / 2, ly - ph / 2, pw, ph, ph / 2);
-          ctx.fillStyle = "rgba(9,12,19,0.82)";
-          ctx.fill();
-          ctx.strokeStyle = rgba(GLOW, 0.6);
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.fillStyle = rgba(HOT, 1);
-          ctx.fillText(name, hx, ly + 0.5);
-          ctx.globalAlpha = 1;
-        }
-      }
-
-      /* --- a tap, then confirmation --- */
-      if (s4 > 0.001) {
-        const [bx, by, bw, bh] = UI.button;
-        const tx = bx + bw * 0.62, ty = by + bh * 0.6;
-        const travel = ease(seg(s4, 0, 0.45));
-        const sx0 = PX + PW + 70, sy0 = PY + PH + 30;
-        const cx = sx0 + (tx - sx0) * travel + Math.sin(travel * Math.PI) * -18;
-        const cy = sy0 + (ty - sy0) * travel;
-        const curA = Math.min(seg(s4, 0, 0.12), 1 - seg(s4, 0.85, 1));
-        const rp = seg(s4, 0.48, 0.78);
-        if (rp > 0 && rp < 1) {
-          ctx.save();
-          roundRect(X(bx), Y(by), bw * s, bh * s, 19 * s);
-          ctx.clip();
-          ctx.fillStyle = rgba(GLOW, 0.35 * (1 - rp));
-          ctx.beginPath();
-          ctx.arc(X(tx), Y(ty), (6 + rp * 40) * s, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-        if (curA > 0.01) {
-          ctx.save();
-          ctx.globalAlpha = curA;
-          ctx.translate(X(cx), Y(cy));
-          const kk = s * 1.1 * (1 - 0.12 * Math.sin(Math.PI * seg(s4, 0.45, 0.62)));
-          ctx.scale(kk, kk);
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(0, 17);
-          ctx.lineTo(4.5, 13);
-          ctx.lineTo(8, 20);
-          ctx.lineTo(10.5, 19);
-          ctx.lineTo(7, 12);
-          ctx.lineTo(12.5, 12);
-          ctx.closePath();
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = SCREEN;
-          ctx.lineWidth = 1.4;
-          ctx.stroke();
-          ctx.restore();
-        }
-        const ta = easeOut(seg(s4, 0.62, 0.8));
-        if (ta > 0) {
-          ctx.save();
-          ctx.globalAlpha = ta;
-          const ty0 = PY + 12 - (1 - ta) * 14;
-          ctx.shadowColor = "rgba(0,0,0,0.5)";
-          ctx.shadowBlur = 14 * s;
-          ctx.shadowOffsetY = 4 * s;
-          roundRect(X(PX + 14), Y(ty0), (PW - 28) * s, 30 * s, 10 * s);
-          ctx.fillStyle = rgba(TEXT, 1);
-          ctx.fill();
-          ctx.shadowColor = "transparent";
-          ctx.beginPath();
-          ctx.arc(X(PX + 30), Y(ty0 + 15), 6 * s, 0, Math.PI * 2);
-          ctx.fillStyle = "#2f9e5b";
-          ctx.fill();
-          txt("✓", PX + 30, ty0 + 15.5, 7, 700, "#ffffff", "center");
-          txt("Lesson started", PX + 42, ty0 + 15, 9.5, 500, SCREEN);
-          ctx.restore();
-        }
+        ctx.restore();
       }
     };
 
@@ -978,7 +749,7 @@ export default function Background() {
     };
   }, []);
 
-  const caption = stage >= 0 ? STAGES[stage].text : active >= 0 ? steps[active].regionLabel : "Scroll through my background";
+  const caption = steps[Math.max(0, active)].caption;
 
   return (
     <section id="about" className="scroll-mt-16 border-t border-rule">
@@ -998,21 +769,6 @@ export default function Background() {
               <p className="text-center text-[15px] text-graphite-soft" aria-live="polite">
                 {caption}
               </p>
-              <p className="hidden text-center text-[12px] text-graphite-soft/70 lg:block">
-                Points from fsaverage, an average of real MRI brain scans. A simplified map: each lobe leads certain functions, but thinking uses many regions together.
-              </p>
-              <ol className={`flex gap-1.5 transition-opacity duration-500 ${stage >= 0 ? "opacity-100" : "opacity-0"}`} aria-hidden>
-                {STAGES.map((st, i) => (
-                  <li
-                    key={st.name}
-                    className={`rounded-full px-2.5 py-0.5 text-[12px] transition-colors duration-300 ${
-                      i === stage ? "bg-select text-white" : i < stage ? "bg-select/10 text-select" : "bg-canvas text-graphite-soft"
-                    }`}
-                  >
-                    {st.name}
-                  </li>
-                ))}
-              </ol>
             </div>
           </div>
         </div>

@@ -102,13 +102,13 @@ const rgba = (c: RGB, a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 
 // The path: a slalom with one turn per step.
 const D = 230; // world distance between stops
-const PATH_X = 170;
-const SWING = 105;
+const PATH_X = 222;
+const SWING = 62;
 const pathX = (wy: number) => PATH_X + SWING * Math.sin((wy / D) * Math.PI);
 const stopY = (i: number) => (i + 0.5) * D;
 
 // The big phone beside her: where each stop's screen is shown.
-const CARD = { x: 372, y: 52, w: 168, h: 336, r: 26 };
+const CARD = { x: 352, y: 46, w: 176, h: 348, r: 26 };
 const SC = { x: CARD.x + 10, y: CARD.y + 30, w: CARD.w - 20, h: CARD.h - 44 };
 
 export default function Background() {
@@ -342,14 +342,21 @@ export default function Background() {
       X: (x: number) => number,
       Y: (y: number) => number,
       s: number,
-    ): { tap: [number, number] | null; tapAt: number; doneAt: number; puzzled: number } => {
+    ): { tap: [number, number] | null } => {
       const { x, y, w, h } = SC;
       const box = (bx: number, by: number, bw: number, bh: number, r: number, fill: string) => {
         rr(X(bx), Y(by), bw * s, bh * s, r * s);
         ctx.fillStyle = fill;
         ctx.fill();
       };
-      const bar = (bx: number, by: number, bw: number, a = 0.8, th = 5) => box(bx, by, bw, th, th / 2, rgba(TEXT, a));
+      const txt = (str: string, tx: number, ty: number, size: number, weight: number, color: string, align: CanvasTextAlign = "left") => {
+        ctx.font = `${weight} ${size * s}px ${font}`;
+        ctx.textAlign = align;
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = color;
+        ctx.fillText(str, X(tx), Y(ty));
+      };
+      const W1 = rgba(TEXT, 0.95), W2 = rgba(TEXT, 0.55), INK = "#0d1220";
       const check = (cx: number, cy: number, r: number, a: number) => {
         if (a <= 0) return;
         ctx.globalAlpha = a;
@@ -358,7 +365,7 @@ export default function Background() {
         ctx.arc(X(cx), Y(cy), r * s * pop(a), 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2.4 * s;
+        ctx.lineWidth = 2.6 * s;
         ctx.beginPath();
         ctx.moveTo(X(cx - r * 0.4), Y(cy));
         ctx.lineTo(X(cx - r * 0.1), Y(cy + r * 0.32));
@@ -366,221 +373,211 @@ export default function Background() {
         ctx.stroke();
         ctx.globalAlpha = 1;
       };
-      const header = (wd = 70) => {
-        bar(x + 10, y + 8, 30, 0.45, 4);
-        bar(x + 10, y + 18, wd, 0.9, 7);
+      const title = (str: string) => txt(str, x + 10, y + 16, 15, 700, W1);
+      const done = (str: string, at: number) => {
+        const a = seg(q, at, at + 0.1);
+        if (a <= 0) return;
+        ctx.globalAlpha = a * 0.92;
+        box(x, y, w, h, 12, SCREEN);
+        ctx.globalAlpha = 1;
+        check(x + w / 2, y + h / 2 - 14, 24, a);
+        ctx.globalAlpha = a;
+        txt(str, x + w / 2, y + h / 2 + 26, 14, 700, W1, "center");
+        ctx.globalAlpha = 1;
       };
 
       if (i === 0) {
-        // Too many identical buttons, she hesitates. Then one clear button.
-        const simplify = ease(seg(q, 0.42, 0.62));
-        header();
+        // Before: twelve look-alike buttons. After: one clear button.
+        const g = ease(seg(q, 0.42, 0.6));
+        const words = ["Sync", "Edit", "Info", "Tools", "Share", "More", "Go", "Next", "Open", "Help", "Set", "Start"];
+        title("Home");
         for (let r = 0; r < 4; r++)
           for (let c = 0; c < 3; c++) {
-            const idx = r * 3 + c;
-            const bx = x + 10 + c * 43, by = y + 40 + r * 40;
-            ctx.globalAlpha = 1 - simplify;
-            box(bx, by, 38, 34, 6, ROW);
-            bar(bx + 6, by + 22, 20 + ((idx * 7) % 10), 0.35, 3);
-            box(bx + 6, by + 6, 10, 10, 3, rgba(TEXT, 0.25));
+            const bx = x + 8 + c * 44, by = y + 36 + r * 42;
+            ctx.globalAlpha = 1 - g;
+            box(bx, by, 40, 36, 6, ROW);
+            txt(words[r * 3 + c], bx + 20, by + 18, 9.5, 500, W2, "center");
             ctx.globalAlpha = 1;
           }
-        const g = simplify;
         if (g > 0) {
           ctx.globalAlpha = g;
-          const bw = 38 + (w - 58) * g, bh = 34 + 10 * g;
-          const bx = x + w / 2 - bw / 2, by = y + 120 + (1 - g) * 20;
-          box(bx, by, bw, bh, 22 * g + 6 * (1 - g), rgba(GLOW, 1));
-          bar(bx + bw / 2 - 25, by + bh / 2 - 3, 50, 0.95, 6);
+          txt("Ready when you are", x + w / 2, y + 100, 11, 500, W2, "center");
+          box(x + 16, y + 122, w - 32, 46, 23, rgba(GLOW, 1));
+          txt("Start", x + w / 2, y + 145, 16, 700, "#fff", "center");
           ctx.globalAlpha = 1;
         }
-        check(x + w / 2, y + 205, 14, seg(q, 0.78, 0.9));
-        return { tap: [x + w / 2 + 10, y + 145], tapAt: 0.7, doneAt: 0.8, puzzled: seg(q, 0.12, 0.25) * (1 - seg(q, 0.45, 0.55)) };
+        done("Started", 0.8);
+        return { tap: [x + w / 2, y + 145] };
       }
 
       if (i === 1) {
-        // A conversation: she is asked, she answers. Listening first.
-        header(60);
-        const b1 = easeOut(seg(q, 0.05, 0.25));
+        // A student asks, she answers in plain words.
+        title("Chat");
+        const b1 = easeOut(seg(q, 0.04, 0.2));
         ctx.globalAlpha = b1;
-        box(x + 10, y + 45 + (1 - b1) * 8, 92, 40, 12, ROW);
-        bar(x + 20, y + 57 + (1 - b1) * 8, 66, 0.7, 4);
-        bar(x + 20, y + 68 + (1 - b1) * 8, 44, 0.5, 4);
+        box(x + 8, y + 38, 110, 34, 12, ROW);
+        txt("I don't get fractions", x + 16, y + 55, 10, 500, W1);
         ctx.globalAlpha = 1;
-        const typing = seg(q, 0.3, 0.5) * (1 - seg(q, 0.5, 0.55));
-        if (typing > 0) {
-          ctx.globalAlpha = typing;
-          box(x + w - 56, y + 100, 46, 22, 11, rgba(GLOW, 0.35));
-          for (let d = 0; d < 3; d++) {
-            const yy = Math.sin(q * 40 + d) * 1.5;
-            ctx.fillStyle = rgba(TEXT, 0.9);
-            ctx.beginPath();
-            ctx.arc(X(x + w - 44 + d * 11), Y(y + 111 + yy), 2.2 * s, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.globalAlpha = 1;
-        }
-        const b2 = easeOut(seg(q, 0.55, 0.72));
+        const b2 = easeOut(seg(q, 0.56, 0.7));
         ctx.globalAlpha = b2;
-        box(x + w - 100, y + 100 + (1 - b2) * 8, 90, 30, 12, rgba(GLOW, 1));
-        bar(x + w - 90, y + 112 + (1 - b2) * 8, 60, 0.95, 5);
+        box(x + w - 120, y + 84, 112, 34, 12, rgba(GLOW, 1));
+        txt("Let's try it with pizza", x + w - 112, y + 101, 10, 600, "#fff");
         ctx.globalAlpha = 1;
-        // the input bar with a send button she taps
-        box(x + 8, y + h - 36, w - 16, 28, 14, ROW);
-        box(x + w - 36, y + h - 33, 22, 22, 11, rgba(GLOW, 1));
-        check(x + w / 2, y + 170, 13, seg(q, 0.76, 0.88));
-        return { tap: [x + w - 25, y + h - 22], tapAt: 0.52, doneAt: 0.75, puzzled: 0 };
+        // what she types
+        const typed = "Let's try it with pizza".slice(0, Math.floor(23 * seg(q, 0.2, 0.42)));
+        box(x + 8, y + h - 40, w - 16, 30, 15, ROW);
+        if (q < 0.56) txt(typed || "Message", x + 18, y + h - 25, 10, 500, typed ? W1 : W2);
+        box(x + w - 36, y + h - 37, 24, 24, 12, rgba(GLOW, 1));
+        txt("↑", x + w - 24, y + h - 25, 12, 700, "#fff", "center");
+        done("Sent", 0.78);
+        return { tap: [x + w - 24, y + h - 25] };
       }
 
       if (i === 2) {
-        // Skeleton turns into a clear list, which she scrolls through.
-        header(80);
-        const real = ease(seg(q, 0.12, 0.35));
-        const scroll = ease(seg(q, 0.45, 0.75)) * 70;
-        ctx.save();
-        rr(X(x), Y(y + 36), w * s, (h - 36) * s, 0);
-        ctx.clip();
+        // A clear list, easy to scan; she scrolls and picks one.
+        title("Lessons");
+        const items = ["Fractions", "Decimals", "Percentages", "Ratios", "Graphs", "Equations"];
         const tones: RGB[] = [GLOW, WARM, GREEN, HOT, GLOW, WARM];
-        for (let r = 0; r < 6; r++) {
-          const by = y + 40 + r * 42 - scroll;
-          box(x + 8, by, w - 16, 36, 10, ROW);
-          box(x + 15, by + 7, 22, 22, 7, real > 0.5 ? rgba(tones[r], 0.85 * real) : rgba(TEXT, 0.12 + 0.1 * Math.sin(q * 30 + r)));
-          bar(x + 45, by + 11, 60 + ((r * 13) % 25), 0.25 + 0.6 * real, 5);
-          bar(x + 45, by + 22, 40, 0.15 + 0.3 * real, 4);
-        }
+        const scroll = ease(seg(q, 0.3, 0.55)) * 84;
+        ctx.save();
+        rr(X(x), Y(y + 32), w * s, (h - 32) * s, 0);
+        ctx.clip();
+        items.forEach((it, r) => {
+          const by = y + 36 + r * 44 - scroll;
+          const picked = r === 3 && q > 0.66;
+          box(x + 8, by, w - 16, 38, 10, picked ? rgba(GLOW, 0.35) : ROW);
+          box(x + 15, by + 8, 22, 22, 7, rgba(tones[r], 0.85));
+          txt(it, x + 45, by + 14, 11, 600, W1);
+          txt(`${4 + r} lessons`, x + 45, by + 27, 8.5, 500, W2);
+        });
         ctx.restore();
-        check(x + w / 2, y + h - 30, 13, seg(q, 0.8, 0.92));
-        // the swipe: a thumb trail moving up
-        return { tap: seg(q, 0.45, 0.75) > 0 && seg(q, 0.45, 0.75) < 1 ? [x + w / 2 + 20, y + 200 - scroll * 1.2] : null, tapAt: 0.45, doneAt: 0.8, puzzled: 0 };
+        done("Lesson opened", 0.78);
+        return { tap: q < 0.58 ? [x + w / 2 + 20, y + 200 - scroll * 1.1] : [x + w / 2, y + 36 + 3 * 44 - 84 + 19] };
       }
 
       if (i === 3) {
-        // Three cards built from the same component; she opens one.
-        header(64);
-        const open = ease(seg(q, 0.55, 0.75));
-        for (let c = 0; c < 3; c++) {
-          const a = pop(seg(q, 0.05 + c * 0.1, 0.25 + c * 0.1));
-          if (a <= 0) continue;
-          const by = y + 42 + c * 70;
-          const grow = c === 1 ? open : 0;
-          ctx.globalAlpha = clamp(a) * (c !== 1 ? 1 - open * 0.5 : 1);
-          box(x + 8, by - grow * 10, w - 16, 62 + grow * 20, 12, c === 1 ? rgba(GLOW, 0.3 + 0.7 * open) : ROW);
-          box(x + 16, by + 8 - grow * 10, 30, 30, 8, rgba(c === 1 ? TEXT : GLOW, c === 1 ? 0.25 + 0.6 * open : 0.7));
-          bar(x + 54, by + 12 - grow * 10, 64, 0.85, 5);
-          bar(x + 54, by + 24 - grow * 10, 44, 0.45, 4);
-          if (grow > 0.3) bar(x + 16, by + 50, w - 48, 0.7 * grow, 4);
+        // Three cards made from the same component; she opens one.
+        title("Courses");
+        const names = ["Math", "Science", "Art"];
+        const tones: RGB[] = [GLOW, GREEN, WARM];
+        const open = ease(seg(q, 0.55, 0.72));
+        names.forEach((nm, c) => {
+          const a = pop(seg(q, 0.04 + c * 0.1, 0.22 + c * 0.1));
+          if (a <= 0) return;
+          const by = y + 38 + c * 70;
+          const sel = c === 1;
+          ctx.globalAlpha = clamp(a) * (sel ? 1 : 1 - open * 0.6);
+          box(x + 8, by, w - 16, 62, 12, sel && open > 0 ? rgba(GLOW, 0.25 + 0.6 * open) : ROW);
+          box(x + 16, by + 14, 34, 34, 9, rgba(tones[c], 0.9));
+          txt(nm, x + 58, by + 24, 12, 700, W1);
+          txt("8 lessons", x + 58, by + 40, 9, 500, W2);
           ctx.globalAlpha = 1;
-        }
-        check(x + w / 2, y + h - 34, 13, seg(q, 0.8, 0.92));
-        return { tap: [x + w / 2 + 6, y + 135], tapAt: 0.52, doneAt: 0.75, puzzled: 0 };
+        });
+        done("Course opened", 0.78);
+        return { tap: [x + w / 2 + 10, y + 38 + 70 + 31] };
       }
 
       if (i === 4) {
-        // Pick a pastry, add one more, place the order.
-        const added = q > 0.42 ? 2 : 1;
-        header(56);
-        box(x + 8, y + 36, w - 16, 120, 14, ROW);
-        // a bun, drawn simply
-        const bx = x + w / 2, by = y + 92;
-        const grd = ctx.createRadialGradient(X(bx - 8), Y(by - 10), 2, X(bx), Y(by), 38 * s);
+        // Pick a pastry, add one more, order.
+        title("Bakery");
+        box(x + 8, y + 34, w - 16, 108, 14, ROW);
+        const bx = x + w / 2, by = y + 82;
+        const grd = ctx.createRadialGradient(X(bx - 8), Y(by - 10), 2, X(bx), Y(by), 36 * s);
         grd.addColorStop(0, "#f2c27b");
         grd.addColorStop(1, "#b5702f");
         ctx.fillStyle = grd;
         ctx.beginPath();
-        ctx.ellipse(X(bx), Y(by), 38 * s, 28 * s, 0, 0, Math.PI * 2);
+        ctx.ellipse(X(bx), Y(by), 36 * s, 26 * s, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "rgba(255,240,215,0.6)";
         ctx.lineWidth = 2 * s;
-        for (const d of [-14, 0, 14]) {
+        for (const d of [-13, 0, 13]) {
           ctx.beginPath();
-          ctx.arc(X(bx + d), Y(by - 2), 12 * s, Math.PI * 1.15, Math.PI * 1.85);
+          ctx.arc(X(bx + d), Y(by - 2), 11 * s, Math.PI * 1.15, Math.PI * 1.85);
           ctx.stroke();
         }
-        // quantity stepper
-        box(x + 14, y + 166, 70, 26, 13, ROW);
-        ctx.font = `600 ${11 * s}px ${font}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = rgba(TEXT, 0.9);
-        ctx.fillText("–", X(x + 28), Y(y + 179));
-        ctx.fillText(String(added), X(x + 49), Y(y + 179));
-        box(x + 60, y + 169, 20, 20, 10, rgba(GLOW, 1));
-        ctx.fillStyle = "#fff";
-        ctx.fillText("+", X(x + 70), Y(y + 179));
-        // order button
-        const press = Math.sin(Math.PI * seg(q, 0.66, 0.74));
-        box(x + 14 + press * 2, y + h - 52 + press, w - 28 - press * 4, 34, 17, rgba(TEXT, 0.95));
-        bar(x + w / 2 - 22, y + h - 37, 44, 0.9, 5);
-        ctx.globalAlpha = 1;
-        const done = seg(q, 0.76, 0.88);
-        if (done > 0) {
-          ctx.globalAlpha = done * 0.85;
-          box(x, y, w, h, 12, SCREEN);
-          ctx.globalAlpha = 1;
-          check(x + w / 2, y + h / 2, 24, done);
-        }
-        const tapA = q < 0.55 ? [x + 70, y + 179] : [x + w / 2 + 12, y + h - 35];
-        return { tap: tapA as [number, number], tapAt: q < 0.55 ? 0.36 : 0.68, doneAt: 0.76, puzzled: 0 };
+        txt("Fresh bun", x + 12, y + 156, 13, 700, W1);
+        const count = q > 0.36 ? 2 : 1;
+        box(x + 12, y + 172, 78, 28, 14, ROW);
+        txt("–", x + 26, y + 186, 13, 600, W1, "center");
+        txt(String(count), x + 51, y + 186, 12, 700, W1, "center");
+        box(x + 64, y + 175, 22, 22, 11, rgba(GLOW, 1));
+        txt("+", x + 75, y + 186, 13, 700, "#fff", "center");
+        const press = Math.sin(Math.PI * seg(q, 0.64, 0.72));
+        box(x + 12 + press * 2, y + h - 50 + press, w - 24 - press * 4, 38, 19, rgba(TEXT, 0.95));
+        txt("Order", x + w / 2, y + h - 31, 14, 700, INK, "center");
+        done("Ordered", 0.76);
+        return { tap: q < 0.5 ? [x + 75, y + 186] : [x + w / 2, y + h - 31] };
       }
 
       if (i === 5) {
-        // A notification arrives; she taps it and reads it.
+        // A notification she understands at a glance.
         const icons: RGB[] = [GLOW, WARM, GREEN, HOT, WARM, GLOW, GREEN, HOT];
-        const opened = ease(seg(q, 0.55, 0.75));
+        const opened = ease(seg(q, 0.55, 0.72));
+        txt("9:41", x + w / 2, y + 40, 26, 300, W1, "center");
         for (let c = 0; c < 8; c++) {
-          const ix = x + 16 + (c % 4) * 32, iy = y + 70 + Math.floor(c / 4) * 40;
-          ctx.globalAlpha = 1 - opened * 0.7;
+          const ix = x + 16 + (c % 4) * 32, iy = y + 120 + Math.floor(c / 4) * 40;
+          ctx.globalAlpha = 1 - opened * 0.8;
           box(ix, iy, 24, 24, 7, rgba(icons[c], 0.75));
           ctx.globalAlpha = 1;
         }
-        const n1 = easeOut(seg(q, 0.15, 0.32));
-        const ny = y + 8 - (1 - n1) * 50 + opened * 20;
-        const nh = 40 + opened * 130;
+        const n1 = easeOut(seg(q, 0.12, 0.3));
+        const ny = y + 64 - (1 - n1) * 90 - opened * 40;
+        const nh = 44 + opened * 150;
         ctx.globalAlpha = n1;
-        box(x + 8, ny, w - 16, nh, 12, rgba(TEXT, 0.95));
-        box(x + 16, ny + 9, 22, 22, 6, rgba(GLOW, 1));
-        bar(x + 46, ny + 11, 60, 0.0, 5);
-        box(x + 46, ny + 11, 60, 5, 2.5, "rgba(13,18,32,0.75)");
-        box(x + 46, ny + 22, 40, 4, 2, "rgba(13,18,32,0.4)");
+        box(x + 8, ny, w - 16, nh, 12, rgba(TEXT, 0.96));
+        box(x + 15, ny + 10, 24, 24, 7, rgba(WARM, 1));
+        txt("Bakery", x + 46, ny + 15, 9, 600, "rgba(13,18,32,0.55)");
+        txt("Your order is ready", x + 46, ny + 29, 10.5, 700, INK);
         if (opened > 0.2) {
           ctx.globalAlpha = n1 * opened;
-          for (let l = 0; l < 5; l++) box(x + 16, ny + 46 + l * 14, w - 36 - (l === 4 ? 40 : 0), 5, 2.5, "rgba(13,18,32,0.35)");
-          box(x + 16, ny + nh - 30, w - 32, 22, 11, rgba(GLOW, 1));
+          txt("Pick it up today", x + 16, ny + 62, 10, 500, "rgba(13,18,32,0.7)");
+          txt("until 6 pm.", x + 16, ny + 76, 10, 500, "rgba(13,18,32,0.7)");
+          box(x + 16, ny + nh - 40, w - 32, 30, 15, rgba(GLOW, 1));
+          txt("Got it", x + w / 2, ny + nh - 25, 12, 700, "#fff", "center");
         }
         ctx.globalAlpha = 1;
-        check(x + w / 2, y + h - 34, 13, seg(q, 0.8, 0.92));
-        return { tap: [x + w / 2, y + 28], tapAt: 0.5, doneAt: 0.78, puzzled: 0 };
+        return { tap: q < 0.62 ? [x + w / 2, y + 86] : [x + w / 2, y + 24 + 194 - 25] };
       }
 
-      // Last stop: one button, one tap, done. Then she waves to you.
+      // Last stop: one button. She taps it, then waves to you.
       const press = Math.sin(Math.PI * seg(q, 0.42, 0.5));
-      const done = seg(q, 0.52, 0.66);
-      const R = 34 - press * 3;
-      ctx.fillStyle = rgba(done > 0 ? GREEN : GLOW, 1);
+      txt("Talia Alon", x + w / 2, y + 70, 15, 700, W1, "center");
+      txt("UX/UI designer", x + w / 2, y + 88, 10.5, 500, W2, "center");
+      box(x + 16 + press * 2, y + 140 + press, w - 32 - press * 4, 46, 23, rgba(GLOW, 1));
+      txt("Say hi", x + w / 2, y + 163, 15, 700, "#fff", "center");
+      done("Message sent", 0.54);
+      return { tap: [x + w / 2, y + 163] };
+    };
+
+    // A finger that comes in, presses, and leaves.
+    const finger = (X: (x: number) => number, Y: (y: number) => number, s: number, tx: number, ty: number, k: number, press: number) => {
+      if (k <= 0) return;
+      const off = (1 - easeOut(k)) * 70;
+      const fx = tx + off * 0.6, fy = ty + off;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, k * 2);
+      ctx.translate(X(fx), Y(fy));
+      ctx.rotate(-0.35);
+      const sc = (1 - 0.08 * press) * s;
+      ctx.scale(sc, sc);
+      ctx.fillStyle = "#f0c9a8";
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(X(x + w / 2), Y(y + h / 2 - 10), R * s * (done > 0 ? pop(done) : 1), 0, Math.PI * 2);
+      ctx.moveTo(-7, 2);
+      ctx.arcTo(-7, -9, 0, -9, 7);
+      ctx.arcTo(7, -9, 7, 2, 7);
+      ctx.lineTo(9, 60);
+      ctx.lineTo(-9, 60);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 2.6 * s;
-      if (done <= 0) {
-        // an envelope
-        const ex = x + w / 2, ey = y + h / 2 - 10;
-        ctx.strokeRect(X(ex - 13), Y(ey - 9), 26 * s, 18 * s);
-        ctx.beginPath();
-        ctx.moveTo(X(ex - 13), Y(ey - 9));
-        ctx.lineTo(X(ex), Y(ey + 2));
-        ctx.lineTo(X(ex + 13), Y(ey - 9));
-        ctx.stroke();
-      } else {
-        const cx = x + w / 2, cy = y + h / 2 - 10;
-        ctx.beginPath();
-        ctx.moveTo(X(cx - 12), Y(cy));
-        ctx.lineTo(X(cx - 3), Y(cy + 9));
-        ctx.lineTo(X(cx + 13), Y(cy - 9));
-        ctx.stroke();
-      }
-      bar(x + w / 2 - 30, y + h / 2 + 40, 60, 0.5, 5);
-      return { tap: [x + w / 2 + 8, y + h / 2 - 4], tapAt: 0.44, doneAt: 0.55, puzzled: 0 };
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath();
+      ctx.ellipse(0, -3, 4, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     };
 
     /* ---------- one frame --------------------------------------------------- */
@@ -656,11 +653,11 @@ export default function Background() {
       }
 
       // which way she faces: the direction the path turns under her feet
-      const G = 3.5; // her size
+      const G = 4; // her size
       const dir = Math.cos((wy / D) * Math.PI) >= 0 ? 1 : -1;
       const gxp = pathX(wy);
       // when she taps and when each screen confirms, so her face reacts in sync
-      const TIMING: [number, number][] = [[0.7, 0.8], [0.52, 0.75], [0.45, 0.8], [0.52, 0.75], [0.68, 0.76], [0.5, 0.78], [0.44, 0.55]];
+      const TIMING: [number, number][] = [[0.7, 0.8], [0.5, 0.78], [0.62, 0.78], [0.52, 0.78], [0.68, 0.76], [0.5, 0.75], [0.44, 0.54]];
       const [tapAt, doneAt] = TIMING[stop];
       const puzzled = stop === 0 ? seg(q, 0.12, 0.25) * (1 - seg(q, 0.45, 0.55)) : 0;
       const phone = at * ease(seg(q, 0, 0.12)) * (stop === n - 1 ? 1 - seg(q, 0.7, 0.8) : 1);
@@ -712,16 +709,36 @@ export default function Background() {
         ctx.restore();
         // her tap: a ripple where her finger lands
         if (r2.tap) {
-          const tp = seg(q, tapAt - 0.04, tapAt + 0.12);
+          // the finger comes in before the tap and leaves after
+          const near = seg(q, tapAt - 0.16, tapAt - 0.02) * (1 - seg(q, tapAt + 0.08, tapAt + 0.16));
+          const press = Math.sin(Math.PI * seg(q, tapAt - 0.03, tapAt + 0.05));
+          const tp = seg(q, tapAt - 0.02, tapAt + 0.12);
           if (tp > 0 && tp < 1) {
             ctx.strokeStyle = rgba(HOT, 1 - tp);
-            ctx.fillStyle = rgba(HOT, 0.35 * (1 - tp));
+            ctx.fillStyle = rgba(HOT, 0.3 * (1 - tp));
             ctx.lineWidth = 2 * s;
             ctx.beginPath();
-            ctx.arc(X(r2.tap[0]), Y(r2.tap[1]), (5 + tp * 16) * s, 0, Math.PI * 2);
+            ctx.arc(X(r2.tap[0]), Y(r2.tap[1]), (6 + tp * 18) * s, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
           }
+          // the earlier tap at stops with two taps (add one, then order / open)
+          if ((stop === 4 && q < 0.5) || (stop === 5 && q < 0.62) || (stop === 2 && q < 0.58)) {
+            const t0 = stop === 4 ? 0.36 : stop === 5 ? 0.38 : 0.3;
+            const k0 = seg(q, t0 - 0.12, t0) * (1 - seg(q, t0 + 0.06, t0 + 0.12));
+            finger(X, Y, s, r2.tap[0], r2.tap[1], k0, Math.sin(Math.PI * seg(q, t0 - 0.03, t0 + 0.04)));
+          } else {
+            finger(X, Y, s, r2.tap[0], r2.tap[1], near, press);
+          }
+        }
+        // the first stop names the change: before and after
+        if (stop === 0) {
+          const after = seg(q, 0.45, 0.55);
+          ctx.font = `700 ${12 * s}px ${font}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = after > 0.5 ? rgba(GREEN, 1) : rgba(WARM, 1);
+          ctx.fillText(after > 0.5 ? "After" : "Before", X(CARD.x + CARD.w / 2), Y(CARD.y - 14));
         }
         ctx.restore();
       }
